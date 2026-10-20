@@ -1,0 +1,47 @@
+# Build output
+target/
+build/
+out/
+*.class
+*.jar
+*.war
+*.log
+
+# Gradle
+.gradle/
+!gradle/wrapper/gradle-wrapper.jar
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+dependency-reduced-pom.xml
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Eclipse / VS Code
+.classpath
+.project
+.settings/
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Local configuration and secrets (never commit these)
+.env
+.env.*
+!.env.example
+application-local.yml
+application-local.properties
+*.pem
+*.key
+
+# Docker volumes and local data
+docker-data/
+postgres-data/
+redis-data/
+kafka-data/
