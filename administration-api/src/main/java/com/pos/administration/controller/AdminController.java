@@ -1,4 +1,4 @@
-package com.pos.administration.web;
+package com.pos.administration.controller;
 
 import java.util.List;
 import java.util.Map;
@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pos.administration.domain.Store;
 import com.pos.administration.domain.Terminal;
 import com.pos.administration.service.AdminService;
-import com.pos.administration.web.AdminDtos.SettingRequest;
-import com.pos.administration.web.AdminDtos.StoreRequest;
-import com.pos.administration.web.AdminDtos.TerminalRequest;
+import com.pos.administration.controller.AdminDtos.SettingRequest;
+import com.pos.administration.controller.AdminDtos.StoreRequest;
+import com.pos.administration.controller.AdminDtos.TerminalRequest;
 import com.pos.common.security.CurrentUser;
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;

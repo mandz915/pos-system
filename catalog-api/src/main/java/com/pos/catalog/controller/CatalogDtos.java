@@ -1,4 +1,4 @@
-package com.pos.catalog.web;
+package com.pos.catalog.controller;
 
 import java.math.BigDecimal;
 import java.time.Instant;

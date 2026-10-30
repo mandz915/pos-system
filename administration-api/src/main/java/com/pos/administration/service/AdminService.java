@@ -13,9 +13,9 @@ import com.pos.administration.domain.Terminal;
 import com.pos.administration.mapper.SettingMapper;
 import com.pos.administration.mapper.StoreMapper;
 import com.pos.administration.mapper.TerminalMapper;
-import com.pos.administration.web.AdminDtos.SettingRequest;
-import com.pos.administration.web.AdminDtos.StoreRequest;
-import com.pos.administration.web.AdminDtos.TerminalRequest;
+import com.pos.administration.controller.AdminDtos.SettingRequest;
+import com.pos.administration.controller.AdminDtos.StoreRequest;
+import com.pos.administration.controller.AdminDtos.TerminalRequest;
 import com.pos.common.error.ApiException;
 import com.pos.common.security.CurrentUser;
 

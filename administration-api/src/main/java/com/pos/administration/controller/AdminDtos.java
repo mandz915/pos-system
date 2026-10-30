@@ -1,4 +1,4 @@
-package com.pos.administration.web;
+package com.pos.administration.controller;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;

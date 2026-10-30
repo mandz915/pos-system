@@ -1,4 +1,4 @@
-package com.pos.catalog.web;
+package com.pos.catalog.controller;
 
 import java.util.List;
 
@@ -18,11 +18,11 @@ import com.pos.catalog.domain.Category;
 import com.pos.catalog.domain.Promotion;
 import com.pos.catalog.domain.TaxRate;
 import com.pos.catalog.service.CatalogService;
-import com.pos.catalog.web.CatalogDtos.CategoryRequest;
-import com.pos.catalog.web.CatalogDtos.ProductRequest;
-import com.pos.catalog.web.CatalogDtos.ProductView;
-import com.pos.catalog.web.CatalogDtos.PromotionRequest;
-import com.pos.catalog.web.CatalogDtos.TaxRateRequest;
+import com.pos.catalog.controller.CatalogDtos.CategoryRequest;
+import com.pos.catalog.controller.CatalogDtos.ProductRequest;
+import com.pos.catalog.controller.CatalogDtos.ProductView;
+import com.pos.catalog.controller.CatalogDtos.PromotionRequest;
+import com.pos.catalog.controller.CatalogDtos.TaxRateRequest;
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
 import com.pos.common.web.ActiveRequest;
