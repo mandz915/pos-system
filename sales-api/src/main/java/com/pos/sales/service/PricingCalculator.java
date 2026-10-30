@@ -1,0 +1,54 @@
+package com.pos.sales.service;
+
+import java.math.BigDecimal;
+import java.math.RoundingMode;
+import java.util.List;
+
+import com.pos.common.util.Money;
+import com.pos.sales.domain.SaleLine;
+
+/**
+ * Line and sale arithmetic. All amounts are rounded half-up to two decimals per line, so a receipt always adds up.
+ *
+ * <p>Tax-inclusive prices (the default for retail in the Philippines): the shelf price already contains the tax, so
+ * the line total equals price minus discount and the tax is the portion {@code rate / (100 + rate)} of it.
+ * Tax-exclusive prices: tax is added on top of price minus discount.
+ */
+public final class PricingCalculator {
+
+    private PricingCalculator() {
+    }
+
+    public record LineAmounts(BigDecimal discountTotal, BigDecimal taxAmount, BigDecimal lineTotal) {
+    }
+
+    public record Totals(BigDecimal subtotal, BigDecimal discountTotal, BigDecimal taxTotal, BigDecimal total) {
+    }
+
+    public static LineAmounts line(BigDecimal quantity, BigDecimal unitPrice, BigDecimal discountPerUnit,
+                                   BigDecimal taxRate, boolean taxInclusive) {
+        BigDecimal gross = Money.round(unitPrice.multiply(quantity));
+        BigDecimal discount = Money.round(discountPerUnit.multiply(quantity));
+        BigDecimal net = gross.subtract(discount);
+        if (taxInclusive) {
+            BigDecimal tax = Money.round(net.multiply(taxRate).divide(Money.HUNDRED.add(taxRate), 10, RoundingMode.HALF_UP));
+            return new LineAmounts(discount, tax, net);
+        }
+        BigDecimal tax = Money.round(net.multiply(taxRate).divide(Money.HUNDRED, 10, RoundingMode.HALF_UP));
+        return new LineAmounts(discount, tax, net.add(tax));
+    }
+
+    public static Totals totals(List<SaleLine> lines) {
+        BigDecimal subtotal = Money.zero();
+        BigDecimal discount = Money.zero();
+        BigDecimal tax = Money.zero();
+        BigDecimal total = Money.zero();
+        for (SaleLine line : lines) {
+            subtotal = subtotal.add(Money.round(line.getUnitPrice().multiply(line.getQuantity())));
+            discount = discount.add(line.getDiscountTotal());
+            tax = tax.add(line.getTaxAmount());
+            total = total.add(line.getLineTotal());
+        }
+        return new Totals(subtotal, discount, tax, total);
+    }
+}

@@ -1,0 +1,3 @@
+com.pos.common.config.PosSecurityAutoConfiguration
+com.pos.common.config.PosWebMvcAutoConfiguration
+com.pos.common.config.PosOutboxAutoConfiguration

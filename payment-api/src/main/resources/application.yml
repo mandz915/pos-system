@@ -1,0 +1,37 @@
+server:
+  port: 8086
+
+spring:
+  application:
+    name: payment-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/pos_payment}
+    username: ${DB_USER:pos}
+    password: ${DB_PASSWORD:pos}
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    jdbc-type-for-null: "NULL"
+
+pos:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
+      ttl: 8h
+      issuer: pos-system
+
+payment:
+  gateway:
+    provider: ${PAYMENT_GATEWAY:mock}
+  timezone: ${APP_TIMEZONE:Asia/Manila}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

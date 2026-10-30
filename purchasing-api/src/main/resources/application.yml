@@ -1,0 +1,43 @@
+server:
+  port: 8088
+
+spring:
+  application:
+    name: purchasing-api
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://localhost:5432/pos_purchasing}
+    username: ${DB_USER:pos}
+    password: ${DB_PASSWORD:pos}
+  kafka:
+    bootstrap-servers: ${KAFKA_BOOTSTRAP:localhost:29092}
+    consumer:
+      group-id: purchasing-api
+      auto-offset-reset: earliest
+    producer:
+      properties:
+        max.block.ms: 5000
+
+mybatis:
+  configuration:
+    map-underscore-to-camel-case: true
+    jdbc-type-for-null: "NULL"
+
+pos:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
+      ttl: 8h
+      issuer: pos-system
+  outbox:
+    enabled: true
+    interval-ms: 1000
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics
+  endpoint:
+    health:
+      probes:
+        enabled: true

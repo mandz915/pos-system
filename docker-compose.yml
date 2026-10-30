@@ -1,0 +1,276 @@
+# Infra only (default):          docker compose up -d
+# Infra + all services:           docker compose --profile apps up -d --build
+name: pos-system
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-pos}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-pos}
+      POSTGRES_DB: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pos}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  kafka:
+    image: apache/kafka:3.9.0
+    ports:
+      - "29092:29092"
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_LISTENERS: INTERNAL://:9092,EXTERNAL://:29092,CONTROLLER://:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:9092,EXTERNAL://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+
+  gateway-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: gateway-api
+    image: pos/gateway-api:local
+    ports:
+      - "8080:8080"
+    environment:
+      SERVER_PORT: 8080
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      USER_API_URL: http://user-api:8081
+      INVENTORY_API_URL: http://inventory-api:8082
+      SALES_API_URL: http://sales-api:8083
+      ADMINISTRATION_API_URL: http://administration-api:8084
+      CATALOG_API_URL: http://catalog-api:8085
+      PAYMENT_API_URL: http://payment-api:8086
+      CUSTOMER_API_URL: http://customer-api:8087
+      PURCHASING_API_URL: http://purchasing-api:8088
+      REPORTING_API_URL: http://reporting-api:8089
+      NOTIFICATION_API_URL: http://notification-api:8090
+
+  user-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: user-api
+    image: pos/user-api:local
+    ports:
+      - "8081:8081"
+    environment:
+      SERVER_PORT: 8081
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_user
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin#12345}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  inventory-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: inventory-api
+    image: pos/inventory-api:local
+    ports:
+      - "8082:8082"
+    environment:
+      SERVER_PORT: 8082
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_inventory
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      KAFKA_BOOTSTRAP: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  sales-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: sales-api
+    image: pos/sales-api:local
+    ports:
+      - "8083:8083"
+    environment:
+      SERVER_PORT: 8083
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_sales
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      KAFKA_BOOTSTRAP: kafka:9092
+      CATALOG_API_URL: http://catalog-api:8085
+      PAYMENT_API_URL: http://payment-api:8086
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  administration-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: administration-api
+    image: pos/administration-api:local
+    ports:
+      - "8084:8084"
+    environment:
+      SERVER_PORT: 8084
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_administration
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  catalog-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: catalog-api
+    image: pos/catalog-api:local
+    ports:
+      - "8085:8085"
+    environment:
+      SERVER_PORT: 8085
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_catalog
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  payment-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: payment-api
+    image: pos/payment-api:local
+    ports:
+      - "8086:8086"
+    environment:
+      SERVER_PORT: 8086
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_payment
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  customer-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: customer-api
+    image: pos/customer-api:local
+    ports:
+      - "8087:8087"
+    environment:
+      SERVER_PORT: 8087
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_customer
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      KAFKA_BOOTSTRAP: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  purchasing-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: purchasing-api
+    image: pos/purchasing-api:local
+    ports:
+      - "8088:8088"
+    environment:
+      SERVER_PORT: 8088
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_purchasing
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      KAFKA_BOOTSTRAP: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  reporting-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: reporting-api
+    image: pos/reporting-api:local
+    ports:
+      - "8089:8089"
+    environment:
+      SERVER_PORT: 8089
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_reporting
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      KAFKA_BOOTSTRAP: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+  notification-api:
+    profiles: ["apps"]
+    build:
+      context: .
+      args:
+        MODULE: notification-api
+    image: pos/notification-api:local
+    ports:
+      - "8090:8090"
+    environment:
+      SERVER_PORT: 8090
+      JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      DB_URL: jdbc:postgresql://postgres:5432/pos_notification
+      DB_USER: ${DB_USER:-pos}
+      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      KAFKA_BOOTSTRAP: kafka:9092
+    depends_on:
+      postgres:
+        condition: service_healthy
+      kafka:
+        condition: service_started
+
+volumes:
+  pgdata:

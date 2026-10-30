@@ -1,0 +1,130 @@
+### POS System: end-to-end walkthrough for the IntelliJ HTTP Client (run the requests top to bottom).
+### Pick the "local" environment in the top right of the editor. Everything goes through the gateway.
+
+### 1. Log in as the bootstrap administrator (token is stored for the following requests)
+POST {{gateway}}/api/auth/login
+Content-Type: application/json
+
+{ "username": "admin", "password": "Admin#12345" }
+
+> {% client.global.set("token", response.body.accessToken); %}
+
+### 2. Who am I?
+GET {{gateway}}/api/auth/me
+Authorization: Bearer {{token}}
+
+### 3. Create a cashier for the main store (store 1 is created by the database seed)
+POST {{gateway}}/api/users
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "username": "cashier1",
+  "password": "Cashier#1234",
+  "fullName": "Cora Cashier",
+  "storeId": 1,
+  "roles": ["CASHIER"],
+  "pin": "1234"
+}
+
+### 4. Create a product (category 1 = General and tax rate 1 = VAT 12% inclusive are seeded)
+POST {{gateway}}/api/catalog/products
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "sku": "COFFEE-001",
+  "barcode": "4800000000011",
+  "name": "Brewed Coffee 12oz",
+  "categoryId": 1,
+  "taxRateId": 1,
+  "price": 120.00,
+  "cost": 35.00
+}
+
+> {% client.global.set("productId", response.body.id); %}
+
+### 5. Add stock to the main store
+POST {{gateway}}/api/inventory/receive
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "storeId": 1, "productId": {{productId}}, "quantity": 50, "note": "Opening stock" }
+
+### 6. Set the low-stock threshold (a notification is queued when stock falls to this level)
+PUT {{gateway}}/api/inventory/stock/reorder-level
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "storeId": 1, "productId": {{productId}}, "reorderLevel": 10 }
+
+### 7. Open a shift on terminal 1 with a 1,000.00 cash float
+POST {{gateway}}/api/sales/shifts/open
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "storeId": 1, "terminalId": 1, "openingCash": 1000.00 }
+
+> {% client.global.set("shiftId", response.body.id); %}
+
+### 8. Ring up a sale (clientRef makes retries safe: sending the same value again returns the same sale)
+POST {{gateway}}/api/sales
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{
+  "clientRef": "{{$uuid}}",
+  "storeId": 1,
+  "terminalId": 1,
+  "lines": [ { "productId": {{productId}}, "quantity": 2 } ]
+}
+
+> {% client.global.set("saleId", response.body.sale.id); %}
+
+### 9. Check out: pay 240.00 with a 500.00 note (the change is 260.00)
+POST {{gateway}}/api/sales/{{saleId}}/checkout
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "payments": [ { "method": "CASH", "amount": 500.00 } ] }
+
+### 10. Print the receipt
+GET {{gateway}}/api/sales/{{saleId}}/receipt
+Authorization: Bearer {{token}}
+
+### 11. Stock was deducted asynchronously through Kafka (give it a second)
+GET {{gateway}}/api/inventory/stock?storeId=1&productId={{productId}}
+Authorization: Bearer {{token}}
+
+### 12. Refund one unit (supervisor level; cash back to the customer)
+POST {{gateway}}/api/sales/{{saleId}}/refund
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "reason": "Customer changed mind", "method": "CASH", "restock": true, "lines": [ { "saleLineId": 1, "quantity": 1 } ] }
+
+### 13. X-read: the shift report while the shift is still open
+GET {{gateway}}/api/sales/shifts/{{shiftId}}/x-read
+Authorization: Bearer {{token}}
+
+### 14. Z-read: close the shift with the counted cash (variance = counted - expected)
+POST {{gateway}}/api/sales/shifts/{{shiftId}}/close
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "countedCash": 1120.00 }
+
+### 15. Sales summary for today (the report is built from events, so it lags by a moment)
+< {% request.variables.set("today", new Date().toISOString().slice(0, 10)); %}
+GET {{gateway}}/api/reports/sales/summary?from={{today}}&to={{today}}
+Authorization: Bearer {{token}}
+
+### 16. Cashier fast login with a PIN (what the till uses)
+POST {{gateway}}/api/auth/pin-login
+Content-Type: application/json
+
+{ "username": "cashier1", "pin": "1234" }
+
+### 17. Queued notifications (low stock, goods received)
+GET {{gateway}}/api/notifications
+Authorization: Bearer {{token}}

@@ -1,0 +1,28 @@
+# Maven
+target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# IntelliJ
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# VS Code / Eclipse
+.vscode/
+.classpath
+.project
+.settings/
+
+# Secrets and local config
+.env
+*.local.yml
+http/http-client.private.env.json
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log

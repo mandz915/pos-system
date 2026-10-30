@@ -1,0 +1,708 @@
+# Starting point for a Kubernetes deployment (any cloud). Review before use:
+#  - replace the placeholder secrets (or use your cloud's secret manager / external-secrets)
+#  - point DB_HOST / KAFKA_BOOTSTRAP at your managed PostgreSQL and Kafka
+#  - replace OWNER in the image names with your GitHub user/org (images are pushed by .github/workflows/ci.yml)
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: pos
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: pos-config
+  namespace: pos
+data:
+  DB_HOST: postgres.pos.svc.cluster.local
+  KAFKA_BOOTSTRAP: kafka.pos.svc.cluster.local:9092
+  USER_API_URL: http://user-api:8081
+  INVENTORY_API_URL: http://inventory-api:8082
+  SALES_API_URL: http://sales-api:8083
+  ADMINISTRATION_API_URL: http://administration-api:8084
+  CATALOG_API_URL: http://catalog-api:8085
+  PAYMENT_API_URL: http://payment-api:8086
+  CUSTOMER_API_URL: http://customer-api:8087
+  PURCHASING_API_URL: http://purchasing-api:8088
+  REPORTING_API_URL: http://reporting-api:8089
+  NOTIFICATION_API_URL: http://notification-api:8090
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pos-secrets
+  namespace: pos
+type: Opaque
+stringData:
+  JWT_SECRET: replace-me-with-at-least-32-random-characters
+  DB_USER: pos
+  DB_PASSWORD: replace-me
+  ADMIN_PASSWORD: replace-me
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway-api
+  namespace: pos
+  labels: {app: gateway-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: gateway-api}
+  template:
+    metadata:
+      labels: {app: gateway-api}
+    spec:
+      containers:
+      - name: gateway-api
+        image: ghcr.io/OWNER/pos-system/gateway-api:latest
+        ports:
+        - containerPort: 8080
+        env:
+        - name: SERVER_PORT
+          value: "8080"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: USER_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: USER_API_URL}}
+        - name: INVENTORY_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: INVENTORY_API_URL}}
+        - name: SALES_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: SALES_API_URL}}
+        - name: ADMINISTRATION_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: ADMINISTRATION_API_URL}}
+        - name: CATALOG_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: CATALOG_API_URL}}
+        - name: PAYMENT_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: PAYMENT_API_URL}}
+        - name: CUSTOMER_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: CUSTOMER_API_URL}}
+        - name: PURCHASING_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: PURCHASING_API_URL}}
+        - name: REPORTING_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REPORTING_API_URL}}
+        - name: NOTIFICATION_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: NOTIFICATION_API_URL}}
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8080}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8080}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway-api
+  namespace: pos
+spec:
+  selector: {app: gateway-api}
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-api
+  namespace: pos
+  labels: {app: user-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: user-api}
+  template:
+    metadata:
+      labels: {app: user-api}
+    spec:
+      containers:
+      - name: user-api
+        image: ghcr.io/OWNER/pos-system/user-api:latest
+        ports:
+        - containerPort: 8081
+        env:
+        - name: SERVER_PORT
+          value: "8081"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_user
+        - name: ADMIN_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: ADMIN_PASSWORD}}
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8081}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8081}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-api
+  namespace: pos
+spec:
+  selector: {app: user-api}
+  ports:
+  - port: 8081
+    targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: inventory-api
+  namespace: pos
+  labels: {app: inventory-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: inventory-api}
+  template:
+    metadata:
+      labels: {app: inventory-api}
+    spec:
+      containers:
+      - name: inventory-api
+        image: ghcr.io/OWNER/pos-system/inventory-api:latest
+        ports:
+        - containerPort: 8082
+        env:
+        - name: SERVER_PORT
+          value: "8082"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_inventory
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8082}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8082}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: inventory-api
+  namespace: pos
+spec:
+  selector: {app: inventory-api}
+  ports:
+  - port: 8082
+    targetPort: 8082
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales-api
+  namespace: pos
+  labels: {app: sales-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: sales-api}
+  template:
+    metadata:
+      labels: {app: sales-api}
+    spec:
+      containers:
+      - name: sales-api
+        image: ghcr.io/OWNER/pos-system/sales-api:latest
+        ports:
+        - containerPort: 8083
+        env:
+        - name: SERVER_PORT
+          value: "8083"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_sales
+        - name: CATALOG_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: CATALOG_API_URL}}
+        - name: PAYMENT_API_URL
+          valueFrom: {configMapKeyRef: {name: pos-config, key: PAYMENT_API_URL}}
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8083}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8083}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: sales-api
+  namespace: pos
+spec:
+  selector: {app: sales-api}
+  ports:
+  - port: 8083
+    targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: administration-api
+  namespace: pos
+  labels: {app: administration-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: administration-api}
+  template:
+    metadata:
+      labels: {app: administration-api}
+    spec:
+      containers:
+      - name: administration-api
+        image: ghcr.io/OWNER/pos-system/administration-api:latest
+        ports:
+        - containerPort: 8084
+        env:
+        - name: SERVER_PORT
+          value: "8084"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_administration
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8084}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8084}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: administration-api
+  namespace: pos
+spec:
+  selector: {app: administration-api}
+  ports:
+  - port: 8084
+    targetPort: 8084
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: catalog-api
+  namespace: pos
+  labels: {app: catalog-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: catalog-api}
+  template:
+    metadata:
+      labels: {app: catalog-api}
+    spec:
+      containers:
+      - name: catalog-api
+        image: ghcr.io/OWNER/pos-system/catalog-api:latest
+        ports:
+        - containerPort: 8085
+        env:
+        - name: SERVER_PORT
+          value: "8085"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_catalog
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8085}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8085}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: catalog-api
+  namespace: pos
+spec:
+  selector: {app: catalog-api}
+  ports:
+  - port: 8085
+    targetPort: 8085
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment-api
+  namespace: pos
+  labels: {app: payment-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: payment-api}
+  template:
+    metadata:
+      labels: {app: payment-api}
+    spec:
+      containers:
+      - name: payment-api
+        image: ghcr.io/OWNER/pos-system/payment-api:latest
+        ports:
+        - containerPort: 8086
+        env:
+        - name: SERVER_PORT
+          value: "8086"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_payment
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8086}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8086}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment-api
+  namespace: pos
+spec:
+  selector: {app: payment-api}
+  ports:
+  - port: 8086
+    targetPort: 8086
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: customer-api
+  namespace: pos
+  labels: {app: customer-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: customer-api}
+  template:
+    metadata:
+      labels: {app: customer-api}
+    spec:
+      containers:
+      - name: customer-api
+        image: ghcr.io/OWNER/pos-system/customer-api:latest
+        ports:
+        - containerPort: 8087
+        env:
+        - name: SERVER_PORT
+          value: "8087"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_customer
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8087}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8087}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: customer-api
+  namespace: pos
+spec:
+  selector: {app: customer-api}
+  ports:
+  - port: 8087
+    targetPort: 8087
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: purchasing-api
+  namespace: pos
+  labels: {app: purchasing-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: purchasing-api}
+  template:
+    metadata:
+      labels: {app: purchasing-api}
+    spec:
+      containers:
+      - name: purchasing-api
+        image: ghcr.io/OWNER/pos-system/purchasing-api:latest
+        ports:
+        - containerPort: 8088
+        env:
+        - name: SERVER_PORT
+          value: "8088"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_purchasing
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8088}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8088}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: purchasing-api
+  namespace: pos
+spec:
+  selector: {app: purchasing-api}
+  ports:
+  - port: 8088
+    targetPort: 8088
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: reporting-api
+  namespace: pos
+  labels: {app: reporting-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: reporting-api}
+  template:
+    metadata:
+      labels: {app: reporting-api}
+    spec:
+      containers:
+      - name: reporting-api
+        image: ghcr.io/OWNER/pos-system/reporting-api:latest
+        ports:
+        - containerPort: 8089
+        env:
+        - name: SERVER_PORT
+          value: "8089"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_reporting
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8089}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8089}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: reporting-api
+  namespace: pos
+spec:
+  selector: {app: reporting-api}
+  ports:
+  - port: 8089
+    targetPort: 8089
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: notification-api
+  namespace: pos
+  labels: {app: notification-api}
+spec:
+  replicas: 2
+  selector:
+    matchLabels: {app: notification-api}
+  template:
+    metadata:
+      labels: {app: notification-api}
+    spec:
+      containers:
+      - name: notification-api
+        image: ghcr.io/OWNER/pos-system/notification-api:latest
+        ports:
+        - containerPort: 8090
+        env:
+        - name: SERVER_PORT
+          value: "8090"
+        - name: DB_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: DB_HOST}}
+        - name: KAFKA_BOOTSTRAP
+          valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
+        - name: JWT_SECRET
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: DB_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
+        - name: DB_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: DB_URL
+          value: jdbc:postgresql://$(DB_HOST):5432/pos_notification
+        readinessProbe:
+          httpGet: {path: /actuator/health/readiness, port: 8090}
+          initialDelaySeconds: 20
+          periodSeconds: 10
+        livenessProbe:
+          httpGet: {path: /actuator/health/liveness, port: 8090}
+          initialDelaySeconds: 40
+          periodSeconds: 20
+        resources:
+          requests: {cpu: 100m, memory: 384Mi}
+          limits: {memory: 768Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: notification-api
+  namespace: pos
+spec:
+  selector: {app: notification-api}
+  ports:
+  - port: 8090
+    targetPort: 8090
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: pos-gateway
+  namespace: pos
+spec:
+  rules:
+  - host: pos.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: gateway-api
+            port:
+              number: 8080

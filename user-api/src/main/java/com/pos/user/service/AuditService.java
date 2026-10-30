@@ -1,0 +1,37 @@
+package com.pos.user.service;
+
+import org.springframework.stereotype.Service;
+
+import com.pos.common.security.AuthenticatedUser;
+import com.pos.common.security.CurrentUser;
+import com.pos.common.web.PageResult;
+import com.pos.common.web.Paging;
+import com.pos.user.domain.AuditEntry;
+import com.pos.user.mapper.AuditMapper;
+
+import lombok.RequiredArgsConstructor;
+
+@Service
+@RequiredArgsConstructor
+public class AuditService {
+
+    private final AuditMapper audit;
+
+    /** Records an action performed by the user of the current request. */
+    public void record(String action, String entity, String entityId, String details) {
+        AuthenticatedUser actor = CurrentUser.find().orElse(null);
+        audit.insert(actor == null ? null : actor.userId(), actor == null ? null : actor.username(),
+                action, entity, entityId, details);
+    }
+
+    /** Records an action for an explicit user (login events happen before a request user exists). */
+    public void recordFor(Long userId, String username, String action, String entity, String entityId, String details) {
+        audit.insert(userId, username, action, entity, entityId, details);
+    }
+
+    public PageResult<AuditEntry> search(Long userId, String action, Integer page, Integer size) {
+        Paging paging = Paging.of(page, size);
+        return PageResult.of(audit.search(userId, action, paging.size(), paging.offset()), paging,
+                audit.count(userId, action));
+    }
+}

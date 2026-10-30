@@ -1,0 +1,40 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: gateway-api
+
+pos:
+  security:
+    jwt:
+      secret: ${JWT_SECRET:change-me-change-me-change-me-change-me}
+      ttl: 8h
+      issuer: pos-system
+  gateway:
+    allowed-origins: ${CORS_ALLOWED_ORIGINS:*}
+    public-paths: /api/auth/login,/api/auth/pin-login
+    rate-limit:
+      enabled: true
+      requests-per-minute: ${RATE_LIMIT_PER_MINUTE:600}
+    services:
+      user: ${USER_API_URL:http://localhost:8081}
+      inventory: ${INVENTORY_API_URL:http://localhost:8082}
+      sales: ${SALES_API_URL:http://localhost:8083}
+      administration: ${ADMINISTRATION_API_URL:http://localhost:8084}
+      catalog: ${CATALOG_API_URL:http://localhost:8085}
+      payment: ${PAYMENT_API_URL:http://localhost:8086}
+      customer: ${CUSTOMER_API_URL:http://localhost:8087}
+      purchasing: ${PURCHASING_API_URL:http://localhost:8088}
+      reporting: ${REPORTING_API_URL:http://localhost:8089}
+      notification: ${NOTIFICATION_API_URL:http://localhost:8090}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  endpoint:
+    health:
+      probes:
+        enabled: true
