@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.payment.mapper.PaymentMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO payments (kind, sale_id, store_id, method, amount, tendered, status, reference, gateway_ref, reason, created_by)
+        VALUES (#{kind}, #{saleId}, #{storeId}, #{method}, #{amount}, #{tendered}, #{status}, #{reference}, #{gatewayRef}, #{reason}, #{createdBy})
+    </insert>
+
+    <select id="findById" resultType="com.pos.payment.domain.Payment">
+        SELECT * FROM payments WHERE id = #{id}
+    </select>
+
+    <select id="findBySale" resultType="com.pos.payment.domain.Payment">
+        SELECT * FROM payments WHERE sale_id = #{saleId} ORDER BY id
+    </select>
+
+    <select id="sumApproved" resultType="java.math.BigDecimal">
+        SELECT COALESCE(SUM(amount), 0) FROM payments WHERE sale_id = #{saleId} AND kind = #{kind} AND status = 'APPROVED'
+    </select>
+
+    <select id="reconciliation" resultType="com.pos.payment.domain.ReconciliationRow">
+        SELECT method, kind, status, COUNT(*) AS count, COALESCE(SUM(amount), 0) AS total
+        FROM payments
+        WHERE store_id = #{storeId} AND created_at &gt;= #{from} AND created_at &lt; #{to}
+        GROUP BY method, kind, status
+        ORDER BY method, kind, status
+    </select>
+
+</mapper>

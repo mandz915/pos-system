@@ -15,7 +15,7 @@ public interface PurchaseOrderMapper {
 
     long nextNumber();
 
-    int insert(PurchaseOrder po);
+    void insert(PurchaseOrder po);
 
     PurchaseOrder findById(@Param("id") Long id);
 
@@ -29,31 +29,29 @@ public interface PurchaseOrderMapper {
 
     long count(@Param("storeId") Long storeId, @Param("status") String status, @Param("supplierId") Long supplierId);
 
-    int updateDraft(PurchaseOrder po);
+    void updateDraft(PurchaseOrder po);
 
-    int markOrdered(@Param("id") Long id);
+    void markOrdered(@Param("id") Long id);
 
-    int setStatus(@Param("id") Long id, @Param("status") String status);
+    void setStatus(@Param("id") Long id, @Param("status") String status);
 
-    // ---- lines
-    int insertLine(PoLine line);
+    void insertLine(PoLine line);
 
-    int deleteLines(@Param("poId") Long poId);
+    void deleteLines(@Param("poId") Long poId);
 
     List<PoLine> lines(@Param("poId") Long poId);
 
     List<PoLine> lockLines(@Param("poId") Long poId);
 
-    int addReceived(@Param("id") Long id, @Param("quantity") BigDecimal quantity);
+    void addReceived(@Param("id") Long id, @Param("quantity") BigDecimal quantity);
 
-    // ---- receipts
-    int insertReceipt(GoodsReceipt receipt);
+    void insertReceipt(GoodsReceipt receipt);
 
-    int insertReceiptLine(@Param("receiptId") Long receiptId,
-                          @Param("poLineId") Long poLineId,
-                          @Param("productId") Long productId,
-                          @Param("quantity") BigDecimal quantity,
-                          @Param("unitCost") BigDecimal unitCost);
+    void insertReceiptLine(@Param("receiptId") Long receiptId,
+                           @Param("poLineId") Long poLineId,
+                           @Param("productId") Long productId,
+                           @Param("quantity") BigDecimal quantity,
+                           @Param("unitCost") BigDecimal unitCost);
 
     List<GoodsReceipt> receipts(@Param("poId") Long poId);
 }

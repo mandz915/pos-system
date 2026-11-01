@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.sales.mapper.ShiftMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO shifts (store_id, terminal_id, cashier_id, status, opening_cash)
+        VALUES (#{storeId}, #{terminalId}, #{cashierId}, #{status}, #{openingCash})
+    </insert>
+
+    <select id="findById" resultType="com.pos.sales.domain.Shift">
+        SELECT * FROM shifts WHERE id = #{id}
+    </select>
+
+    <select id="lock" resultType="com.pos.sales.domain.Shift">
+        SELECT * FROM shifts WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="findOpenByTerminal" resultType="com.pos.sales.domain.Shift">
+        SELECT * FROM shifts WHERE terminal_id = #{terminalId} AND status = 'OPEN'
+    </select>
+
+    <update id="close">
+        UPDATE shifts SET status = 'CLOSED', closing_cash = #{closingCash}, expected_cash = #{expectedCash},
+            closed_at = now()
+        WHERE id = #{id}
+    </update>
+
+    <insert id="insertCashMovement" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO cash_movements (shift_id, type, amount, reason, created_by)
+        VALUES (#{shiftId}, #{type}, #{amount}, #{reason}, #{createdBy})
+    </insert>
+
+    <select id="cashMovements" resultType="com.pos.sales.domain.CashMovement">
+        SELECT * FROM cash_movements WHERE shift_id = #{shiftId} ORDER BY id
+    </select>
+
+    <select id="salesTotals" resultType="com.pos.sales.domain.ShiftSalesTotals">
+        SELECT COUNT(*) AS sales_count,
+               COALESCE(SUM(total), 0) AS gross,
+               COALESCE(SUM(discount_total), 0) AS discount,
+               COALESCE(SUM(tax_total), 0) AS tax
+        FROM sales
+        WHERE shift_id = #{shiftId} AND status IN ('COMPLETED', 'REFUNDED')
+    </select>
+
+    <select id="paymentsByMethod" resultType="com.pos.sales.domain.AmountByLabel">
+        SELECT p.method AS label, COALESCE(SUM(p.amount), 0) AS amount
+        FROM sale_payments p JOIN sales s ON s.id = p.sale_id
+        WHERE s.shift_id = #{shiftId} AND s.status IN ('COMPLETED', 'REFUNDED')
+        GROUP BY p.method
+    </select>
+
+    <select id="cashMovementTotals" resultType="com.pos.sales.domain.AmountByLabel">
+        SELECT type AS label, COALESCE(SUM(amount), 0) AS amount
+        FROM cash_movements WHERE shift_id = #{shiftId} GROUP BY type
+    </select>
+
+    <select id="refundTotals" resultType="com.pos.sales.domain.RefundTotals">
+        SELECT COALESCE(SUM(refund_total), 0) AS total,
+               COALESCE(SUM(CASE WHEN method = 'CASH' THEN refund_total ELSE 0 END), 0) AS cash
+        FROM sale_returns WHERE shift_id = #{shiftId}
+    </select>
+
+</mapper>

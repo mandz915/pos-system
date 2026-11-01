@@ -1,4 +1,4 @@
-package com.pos.catalog.controller;
+package com.pos.catalog.dto;
 
 import java.math.BigDecimal;
 import java.time.Instant;
@@ -6,6 +6,7 @@ import java.time.Instant;
 import com.pos.catalog.domain.PromotionType;
 
 import jakarta.validation.constraints.DecimalMin;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
@@ -44,7 +45,8 @@ public final class CatalogDtos {
 
     /**
      * What clients and other services see. {@code cost} is only filled for managers/admins.
-     * {@code taxInclusive} tells whether {@code price} already contains the tax.
+     * {@code taxInclusive} tells whether {@code price} already contains the tax. {@code tax} repeats the tax details
+     * as one optional object (null when the product has no tax assigned).
      */
     public record ProductView(
             Long id,
@@ -62,16 +64,32 @@ public final class CatalogDtos {
             BigDecimal discountPerUnit,
             BigDecimal effectivePrice,
             String imageUrl,
-            boolean active) {
+            boolean active,
+            TaxInfo tax) {
+
+        /** The same view without the cost, safe to cache and to show to any signed-in user. */
+        public ProductView withoutCost() {
+            return new ProductView(id, sku, barcode, name, description, categoryId, taxRateId, taxRate, taxInclusive,
+                    uom, price, null, discountPerUnit, effectivePrice, imageUrl, active, tax);
+        }
+    }
+
+    /** The tax that applies to an item; {@code null} on a view when the product has no tax assigned (untaxed). */
+    public record TaxInfo(Long id, String code, BigDecimal rate, boolean inclusive) {
     }
 
     public record PromotionRequest(
             @NotBlank @Size(max = 30) String code,
             @NotBlank @Size(max = 150) String name,
             @NotNull PromotionType type,
-            @NotNull @DecimalMin(value = "0.01") BigDecimal value,
+            @DecimalMin(value = "0.01") BigDecimal value,
+            @Min(1) Integer buyQty,
+            @Min(1) Integer getQty,
+            @Min(1) Integer minQty,
             Long productId,
             Long categoryId,
+            Long storeId,
+            @Size(max = 30) String couponCode,
             Instant startsAt,
             Instant endsAt,
             Boolean active) {

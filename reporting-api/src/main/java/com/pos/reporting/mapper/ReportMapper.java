@@ -15,18 +15,20 @@ import com.pos.reporting.domain.ProductSales;
 public interface ReportMapper {
 
     // ---------------------------------------------------------------- writes (event handlers)
-    int addSale(@Param("storeId") Long storeId, @Param("day") LocalDate day, @Param("gross") BigDecimal gross,
-                @Param("discount") BigDecimal discount, @Param("tax") BigDecimal tax);
+    void addSale(@Param("storeId") Long storeId, @Param("day") LocalDate day, @Param("gross") BigDecimal gross,
+                 @Param("discount") BigDecimal discount, @Param("tax") BigDecimal tax);
 
-    int addRefund(@Param("storeId") Long storeId, @Param("day") LocalDate day, @Param("amount") BigDecimal amount);
+    void addRefund(@Param("storeId") Long storeId, @Param("day") LocalDate day, @Param("amount") BigDecimal amount);
 
-    /** Adds (or, with negative values, takes away) quantity and revenue of one product on one day. */
-    int addProduct(@Param("storeId") Long storeId, @Param("day") LocalDate day, @Param("productId") Long productId,
-                   @Param("sku") String sku, @Param("name") String name,
-                   @Param("quantity") BigDecimal quantity, @Param("revenue") BigDecimal revenue);
+    /**
+     * Adds (or, with negative values, takes away) quantity and revenue of one product on one day.
+     */
+    void addProduct(@Param("storeId") Long storeId, @Param("day") LocalDate day, @Param("productId") Long productId,
+                    @Param("sku") String sku, @Param("name") String name,
+                    @Param("quantity") BigDecimal quantity, @Param("revenue") BigDecimal revenue);
 
-    int addCashier(@Param("storeId") Long storeId, @Param("day") LocalDate day,
-                   @Param("cashierId") Long cashierId, @Param("gross") BigDecimal gross);
+    void addCashier(@Param("storeId") Long storeId, @Param("day") LocalDate day,
+                    @Param("cashierId") Long cashierId, @Param("gross") BigDecimal gross);
 
     /** @return 1 when the event is new, 0 when it was already processed. */
     int markProcessed(@Param("eventId") String eventId);

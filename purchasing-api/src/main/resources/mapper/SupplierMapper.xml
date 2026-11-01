@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.purchasing.mapper.SupplierMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO suppliers (code, name, contact, phone, email, address, active) VALUES (#{code}, #{name}, #{contact}, #{phone}, #{email}, #{address}, #{active})
+    </insert>
+
+    <select id="findById" resultType="com.pos.purchasing.domain.Supplier">
+        SELECT * FROM suppliers WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultType="com.pos.purchasing.domain.Supplier">
+        SELECT * FROM suppliers
+        <where>
+          <if test="q != null">AND (name ILIKE #{q} OR code ILIKE #{q})</if>
+        </where>
+        ORDER BY name
+    </select>
+
+    <update id="update">
+        UPDATE suppliers SET name = #{name}, contact = #{contact}, phone = #{phone}, email = #{email}, address = #{address} WHERE id = #{id}
+    </update>
+
+    <update id="setActive">
+        UPDATE suppliers SET active = #{active} WHERE id = #{id}
+    </update>
+
+</mapper>

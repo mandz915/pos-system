@@ -24,19 +24,19 @@ public interface UserMapper {
 
     List<Long> allIds();
 
-    int update(User user);
+    void update(User user);
 
-    int setActive(@Param("id") Long id, @Param("active") boolean active);
+    void setActive(@Param("id") Long id, @Param("active") boolean active);
 
-    int updatePassword(@Param("id") Long id, @Param("hash") String hash);
+    void updatePassword(@Param("id") Long id, @Param("hash") String hash);
 
-    int updatePin(@Param("id") Long id, @Param("hash") String hash);
+    void updatePin(@Param("id") Long id, @Param("hash") String hash);
 
     List<String> rolesOf(@Param("userId") Long userId);
 
     List<String> allRoles();
 
-    int addRole(@Param("userId") Long userId, @Param("role") String role);
+    void addRole(@Param("userId") Long userId, @Param("role") String role);
 
-    int clearRoles(@Param("userId") Long userId);
+    void clearRoles(@Param("userId") Long userId);
 }

@@ -13,7 +13,7 @@ public interface ReturnMapper {
 
     int insert(SaleReturn saleReturn);
 
-    int insertLine(SaleReturnLine line);
+    void insertLine(SaleReturnLine line);
 
     List<SaleReturn> listBySale(@Param("saleId") Long saleId);
 }

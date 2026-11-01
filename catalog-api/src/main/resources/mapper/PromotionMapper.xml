@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.catalog.mapper.PromotionMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO promotions (code, name, type, value, buy_qty, get_qty, min_qty, product_id, category_id,
+            store_id, coupon_code, starts_at, ends_at, active)
+        VALUES (#{code}, #{name}, #{type}, #{value}, #{buyQty}, #{getQty}, #{minQty}, #{productId}, #{categoryId},
+            #{storeId}, #{couponCode}, #{startsAt}, #{endsAt}, #{active})
+    </insert>
+
+    <select id="findById" resultType="com.pos.catalog.domain.Promotion">
+        SELECT * FROM promotions WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultType="com.pos.catalog.domain.Promotion">
+        SELECT * FROM promotions ORDER BY id DESC
+    </select>
+
+    <select id="findLive" resultType="com.pos.catalog.domain.Promotion">
+        SELECT * FROM promotions
+        WHERE active = TRUE
+          AND (starts_at IS NULL OR starts_at &lt;= now())
+          AND (ends_at IS NULL OR ends_at &gt; now())
+    </select>
+
+    <update id="update">
+        UPDATE promotions SET code = #{code}, name = #{name}, type = #{type}, value = #{value},
+            buy_qty = #{buyQty}, get_qty = #{getQty}, min_qty = #{minQty}, product_id = #{productId},
+            category_id = #{categoryId}, store_id = #{storeId}, coupon_code = #{couponCode},
+            starts_at = #{startsAt}, ends_at = #{endsAt}, active = #{active}
+        WHERE id = #{id}
+    </update>
+
+</mapper>

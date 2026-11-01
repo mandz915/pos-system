@@ -11,13 +11,13 @@ import com.pos.customer.domain.LoyaltyTransaction;
 @Mapper
 public interface LedgerMapper {
 
-    int insertLoyalty(LoyaltyTransaction transaction);
+    void insertLoyalty(LoyaltyTransaction transaction);
 
     List<LoyaltyTransaction> loyaltyHistory(@Param("customerId") Long customerId, @Param("size") int size, @Param("offset") int offset);
 
     long loyaltyCount(@Param("customerId") Long customerId);
 
-    int insertCredit(CreditTransaction transaction);
+    void insertCredit(CreditTransaction transaction);
 
     List<CreditTransaction> creditHistory(@Param("customerId") Long customerId, @Param("size") int size, @Param("offset") int offset);
 

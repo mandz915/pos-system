@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.customer.mapper.CustomerMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO customers (code, name, phone, email, address, credit_limit, active)
+        VALUES (#{code}, #{name}, #{phone}, #{email}, #{address}, #{creditLimit}, #{active})
+    </insert>
+
+    <select id="findById" resultType="com.pos.customer.domain.Customer">
+        SELECT * FROM customers WHERE id = #{id}
+    </select>
+
+    <select id="lock" resultType="com.pos.customer.domain.Customer">
+        SELECT * FROM customers WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="search" resultType="com.pos.customer.domain.Customer">
+        SELECT * FROM customers
+        <where>
+          <if test="q != null">AND (name ILIKE #{q} OR code ILIKE #{q} OR phone ILIKE #{q} OR email ILIKE #{q})</if>
+        </where>
+        ORDER BY name LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM customers
+        <where>
+          <if test="q != null">AND (name ILIKE #{q} OR code ILIKE #{q} OR phone ILIKE #{q} OR email ILIKE #{q})</if>
+        </where>
+    </select>
+
+    <update id="update">
+        UPDATE customers SET name = #{name}, phone = #{phone}, email = #{email}, address = #{address}, credit_limit = #{creditLimit} WHERE id = #{id}
+    </update>
+
+    <update id="setActive">
+        UPDATE customers SET active = #{active} WHERE id = #{id}
+    </update>
+
+    <update id="setPoints">
+        UPDATE customers SET points_balance = #{points} WHERE id = #{id}
+    </update>
+
+    <update id="setCreditBalance">
+        UPDATE customers SET credit_balance = #{balance} WHERE id = #{id}
+    </update>
+
+</mapper>

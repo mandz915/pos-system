@@ -21,17 +21,17 @@ public interface SaleMapper {
 
     Sale findByClientRef(@Param("clientRef") String clientRef);
 
-    int updateTotals(Sale sale);
+    void updateTotals(Sale sale);
 
-    int updateStatus(@Param("id") Long id, @Param("status") SaleStatus status);
+    void updateStatus(@Param("id") Long id, @Param("status") SaleStatus status);
 
-    int voidSale(@Param("id") Long id, @Param("reason") String reason);
+    void voidSale(@Param("id") Long id, @Param("reason") String reason);
 
-    int complete(@Param("id") Long id,
-                 @Param("receiptNo") String receiptNo,
-                 @Param("paidTotal") BigDecimal paidTotal,
-                 @Param("changeDue") BigDecimal changeDue,
-                 @Param("completedAt") Instant completedAt);
+    void complete(@Param("id") Long id,
+                  @Param("receiptNo") String receiptNo,
+                  @Param("paidTotal") BigDecimal paidTotal,
+                  @Param("changeDue") BigDecimal changeDue,
+                  @Param("completedAt") Instant completedAt);
 
     /** Atomically takes the next gapless receipt number of the store. */
     long nextReceiptNo(@Param("storeId") Long storeId);

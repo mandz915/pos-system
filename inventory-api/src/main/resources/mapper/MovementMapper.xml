@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.inventory.mapper.MovementMapper">
+
+    <insert id="insert">
+        INSERT INTO stock_movements (store_id, product_id, type, quantity, balance_after, ref_type, ref_id, note, created_by)
+        VALUES (#{storeId}, #{productId}, #{type}, #{quantity}, #{balanceAfter}, #{refType}, #{refId}, #{note}, #{createdBy})
+    </insert>
+
+    <select id="search" resultType="com.pos.inventory.domain.StockMovement">
+        SELECT * FROM stock_movements
+        <where>
+          <if test="storeId != null">AND store_id = #{storeId}</if>
+          <if test="productId != null">AND product_id = #{productId}</if>
+        </where>
+        ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM stock_movements
+        <where>
+          <if test="storeId != null">AND store_id = #{storeId}</if>
+          <if test="productId != null">AND product_id = #{productId}</if>
+        </where>
+    </select>
+
+</mapper>

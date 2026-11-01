@@ -18,5 +18,5 @@ public interface CategoryMapper {
 
     int update(Category category);
 
-    int setActive(@Param("id") Long id, @Param("active") boolean active);
+    void setActive(@Param("id") Long id, @Param("active") boolean active);
 }

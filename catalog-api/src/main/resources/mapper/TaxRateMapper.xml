@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.catalog.mapper.TaxRateMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO tax_rates (code, name, rate, inclusive, active) VALUES (#{code}, #{name}, #{rate}, #{inclusive}, #{active})
+    </insert>
+
+    <select id="findById" resultType="com.pos.catalog.domain.TaxRate">
+        SELECT * FROM tax_rates WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultType="com.pos.catalog.domain.TaxRate">
+        SELECT * FROM tax_rates ORDER BY code
+    </select>
+
+    <update id="update">
+        UPDATE tax_rates SET code = #{code}, name = #{name}, rate = #{rate}, inclusive = #{inclusive}, active = #{active} WHERE id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.sales.mapper.SaleLineMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO sale_lines (sale_id, line_no, product_id, sku, name, quantity, unit_price, discount_per_unit,
+            discount_total, tax_code, tax_overridden, tax_rate, tax_inclusive, tax_amount, promotion_code, line_total)
+        VALUES (#{saleId}, #{lineNo}, #{productId}, #{sku}, #{name}, #{quantity}, #{unitPrice}, #{discountPerUnit},
+            #{discountTotal}, #{taxCode}, #{taxOverridden}, #{taxRate}, #{taxInclusive}, #{taxAmount}, #{promotionCode}, #{lineTotal})
+    </insert>
+
+    <select id="listBySale" resultType="com.pos.sales.domain.SaleLine">
+        SELECT * FROM sale_lines WHERE sale_id = #{saleId} ORDER BY line_no
+    </select>
+
+    <delete id="deleteBySale">
+        DELETE FROM sale_lines WHERE sale_id = #{saleId}
+    </delete>
+
+    <update id="addReturned">
+        UPDATE sale_lines SET returned_qty = returned_qty + #{quantity} WHERE id = #{id}
+    </update>
+
+    <select id="countNotFullyReturned" resultType="java.lang.Long">
+        SELECT count(*) FROM sale_lines WHERE sale_id = #{saleId} AND returned_qty &lt; quantity
+    </select>
+
+</mapper>

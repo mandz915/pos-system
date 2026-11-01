@@ -20,11 +20,11 @@ public interface StockCountMapper {
 
     List<StockCount> findAll(@Param("storeId") Long storeId);
 
-    int markPosted(@Param("id") Long id);
+    void markPosted(@Param("id") Long id);
 
-    int upsertLine(@Param("countId") Long countId, @Param("productId") Long productId, @Param("countedQty") BigDecimal countedQty);
+    void upsertLine(@Param("countId") Long countId, @Param("productId") Long productId, @Param("countedQty") BigDecimal countedQty);
 
-    int setSystemQty(@Param("id") Long id, @Param("systemQty") BigDecimal systemQty);
+    void setSystemQty(@Param("id") Long id, @Param("systemQty") BigDecimal systemQty);
 
     List<StockCountLine> lines(@Param("countId") Long countId);
 }

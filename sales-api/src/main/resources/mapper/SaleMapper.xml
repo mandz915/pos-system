@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.sales.mapper.SaleMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO sales (client_ref, store_id, terminal_id, shift_id, cashier_id, customer_id, status)
+        VALUES (#{clientRef}, #{storeId}, #{terminalId}, #{shiftId}, #{cashierId}, #{customerId}, #{status})
+    </insert>
+
+    <select id="findById" resultType="com.pos.sales.domain.Sale">
+        SELECT * FROM sales WHERE id = #{id}
+    </select>
+
+    <select id="lock" resultType="com.pos.sales.domain.Sale">
+        SELECT * FROM sales WHERE id = #{id} FOR UPDATE
+    </select>
+
+    <select id="findByClientRef" resultType="com.pos.sales.domain.Sale">
+        SELECT * FROM sales WHERE client_ref = #{clientRef}
+    </select>
+
+    <update id="updateTotals">
+        UPDATE sales SET subtotal = #{subtotal}, discount_total = #{discountTotal},
+            tax_total = #{taxTotal}, total = #{total}
+        WHERE id = #{id}
+    </update>
+
+    <update id="updateStatus">
+        UPDATE sales SET status = #{status} WHERE id = #{id}
+    </update>
+
+    <update id="voidSale">
+        UPDATE sales SET status = 'VOIDED', void_reason = #{reason} WHERE id = #{id}
+    </update>
+
+    <update id="complete">
+        UPDATE sales SET status = 'COMPLETED', receipt_no = #{receiptNo}, paid_total = #{paidTotal},
+            change_due = #{changeDue}, completed_at = #{completedAt}
+        WHERE id = #{id}
+    </update>
+
+    <select id="nextReceiptNo" resultType="java.lang.Long">
+        INSERT INTO receipt_sequences (store_id, last_no) VALUES (#{storeId}, 1)
+        ON CONFLICT (store_id) DO UPDATE SET last_no = receipt_sequences.last_no + 1
+        RETURNING last_no
+    </select>
+
+    <select id="search" resultType="com.pos.sales.domain.Sale">
+        SELECT * FROM sales
+        <where>
+          <if test="storeId != null">AND store_id = #{storeId}</if>
+          <if test="status != null">AND status = #{status}</if>
+          <if test="from != null">AND created_at &gt;= #{from}</if>
+          <if test="to != null">AND created_at &lt; #{to}</if>
+        </where>
+        ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM sales
+        <where>
+          <if test="storeId != null">AND store_id = #{storeId}</if>
+          <if test="status != null">AND status = #{status}</if>
+          <if test="from != null">AND created_at &gt;= #{from}</if>
+          <if test="to != null">AND created_at &lt; #{to}</if>
+        </where>
+    </select>
+
+</mapper>

@@ -10,16 +10,20 @@ import com.pos.notification.domain.Notification;
 @Mapper
 public interface NotificationMapper {
 
-    /** @return 1 when stored, 0 when a notification for this event already exists (duplicate delivery). */
-    int insert(Notification notification);
+    /**
+     *
+     */
+    void insert(Notification notification);
 
     /** Claims a batch for dispatching; rows are locked so several instances never send the same one twice. */
     List<Notification> claimPending(@Param("limit") int limit);
 
-    int markSent(@Param("id") Long id);
+    void markSent(@Param("id") Long id);
 
-    /** Stays PENDING (retried on the next tick) until {@code maxAttempts} is reached, then FAILED. */
-    int markAttemptFailed(@Param("id") Long id, @Param("error") String error, @Param("maxAttempts") int maxAttempts);
+    /**
+     * Stays PENDING (retried on the next tick) until {@code maxAttempts} is reached, then FAILED.
+     */
+    void markAttemptFailed(@Param("id") Long id, @Param("error") String error, @Param("maxAttempts") int maxAttempts);
 
     int requeue(@Param("id") Long id);
 

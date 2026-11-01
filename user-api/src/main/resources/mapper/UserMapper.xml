@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.user.mapper.UserMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO users (username, password_hash, pin_hash, full_name, email, store_id, active)
+        VALUES (#{username}, #{passwordHash}, #{pinHash}, #{fullName}, #{email}, #{storeId}, #{active})
+    </insert>
+
+    <select id="findById" resultType="com.pos.user.domain.User">
+        SELECT * FROM users WHERE id = #{id}
+    </select>
+
+    <select id="findByUsername" resultType="com.pos.user.domain.User">
+        SELECT * FROM users WHERE lower(username) = lower(#{username})
+    </select>
+
+    <select id="search" resultType="com.pos.user.domain.User">
+        SELECT * FROM users
+        <where>
+          <if test="q != null">(username ILIKE #{q} OR full_name ILIKE #{q})</if>
+        </where>
+        ORDER BY id LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM users
+        <where>
+          <if test="q != null">(username ILIKE #{q} OR full_name ILIKE #{q})</if>
+        </where>
+    </select>
+
+    <select id="countAll" resultType="java.lang.Long">
+        SELECT count(*) FROM users
+    </select>
+
+    <select id="allIds" resultType="java.lang.Long">
+        SELECT id FROM users ORDER BY id
+    </select>
+
+    <update id="update">
+        UPDATE users SET full_name = #{fullName}, email = #{email}, store_id = #{storeId}, updated_at = now() WHERE id = #{id}
+    </update>
+
+    <update id="setActive">
+        UPDATE users SET active = #{active}, updated_at = now() WHERE id = #{id}
+    </update>
+
+    <update id="updatePassword">
+        UPDATE users SET password_hash = #{hash}, updated_at = now() WHERE id = #{id}
+    </update>
+
+    <update id="updatePin">
+        UPDATE users SET pin_hash = #{hash}, updated_at = now() WHERE id = #{id}
+    </update>
+
+    <select id="rolesOf" resultType="java.lang.String">
+        SELECT r.name FROM roles r
+        JOIN user_roles ur ON ur.role_id = r.id
+        WHERE ur.user_id = #{userId}
+        ORDER BY r.name
+    </select>
+
+    <select id="allRoles" resultType="java.lang.String">
+        SELECT name FROM roles ORDER BY id
+    </select>
+
+    <insert id="addRole">
+        INSERT INTO user_roles (user_id, role_id)
+        SELECT #{userId}, id FROM roles WHERE name = #{role}
+        ON CONFLICT DO NOTHING
+    </insert>
+
+    <delete id="clearRoles">
+        DELETE FROM user_roles WHERE user_id = #{userId}
+    </delete>
+
+</mapper>

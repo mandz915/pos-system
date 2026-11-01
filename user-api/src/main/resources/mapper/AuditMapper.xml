@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.user.mapper.AuditMapper">
+
+    <insert id="insert">
+        INSERT INTO audit_log (user_id, username, action, entity, entity_id, details)
+        VALUES (#{userId}, #{username}, #{action}, #{entity}, #{entityId}, #{details})
+    </insert>
+
+    <select id="search" resultType="com.pos.user.domain.AuditEntry">
+        SELECT * FROM audit_log
+        <where>
+          <if test="userId != null">AND user_id = #{userId}</if>
+          <if test="action != null">AND action = #{action}</if>
+        </where>
+        ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM audit_log
+        <where>
+          <if test="userId != null">AND user_id = #{userId}</if>
+          <if test="action != null">AND action = #{action}</if>
+        </where>
+    </select>
+
+</mapper>

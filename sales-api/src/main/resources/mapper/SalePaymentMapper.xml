@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.sales.mapper.SalePaymentMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO sale_payments (sale_id, method, amount, tendered, reference, payment_id, gateway_ref)
+        VALUES (#{saleId}, #{method}, #{amount}, #{tendered}, #{reference}, #{paymentId}, #{gatewayRef})
+    </insert>
+
+    <select id="listBySale" resultType="com.pos.sales.domain.SalePayment">
+        SELECT * FROM sale_payments WHERE sale_id = #{saleId} ORDER BY id
+    </select>
+
+</mapper>

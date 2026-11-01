@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.inventory.mapper.StockLevelMapper">
+
+    <insert id="ensure">
+        INSERT INTO stock_levels (store_id, product_id) VALUES (#{storeId}, #{productId}) ON CONFLICT (store_id, product_id) DO NOTHING
+    </insert>
+
+    <select id="lock" resultType="com.pos.inventory.domain.StockLevel">
+        SELECT * FROM stock_levels WHERE store_id = #{storeId} AND product_id = #{productId} FOR UPDATE
+    </select>
+
+    <select id="find" resultType="com.pos.inventory.domain.StockLevel">
+        SELECT * FROM stock_levels WHERE store_id = #{storeId} AND product_id = #{productId}
+    </select>
+
+    <update id="updateQuantity">
+        UPDATE stock_levels SET quantity = #{quantity}, updated_at = now() WHERE id = #{id}
+    </update>
+
+    <update id="updateReorderLevel">
+        UPDATE stock_levels SET reorder_level = #{level}, updated_at = now() WHERE store_id = #{storeId} AND product_id = #{productId}
+    </update>
+
+    <select id="search" resultType="com.pos.inventory.domain.StockLevel">
+        SELECT * FROM stock_levels
+        <where>
+          <if test="storeId != null">AND store_id = #{storeId}</if>
+          <if test="productId != null">AND product_id = #{productId}</if>
+          <if test="lowOnly">AND reorder_level &gt; 0 AND quantity &lt;= reorder_level</if>
+        </where>
+        ORDER BY store_id, product_id LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM stock_levels
+        <where>
+          <if test="storeId != null">AND store_id = #{storeId}</if>
+          <if test="productId != null">AND product_id = #{productId}</if>
+          <if test="lowOnly">AND reorder_level &gt; 0 AND quantity &lt;= reorder_level</if>
+        </where>
+    </select>
+
+</mapper>

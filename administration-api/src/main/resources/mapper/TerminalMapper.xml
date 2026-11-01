@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.administration.mapper.TerminalMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO terminals (store_id, code, name, active) VALUES (#{storeId}, #{code}, #{name}, #{active})
+    </insert>
+
+    <select id="findById" resultType="com.pos.administration.domain.Terminal">
+        SELECT * FROM terminals WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultType="com.pos.administration.domain.Terminal">
+        SELECT * FROM terminals
+        <where>
+          <if test="storeId != null">store_id = #{storeId}</if>
+        </where>
+        ORDER BY code
+    </select>
+
+    <update id="update">
+        UPDATE terminals SET store_id = #{storeId}, code = #{code}, name = #{name} WHERE id = #{id}
+    </update>
+
+    <update id="setActive">
+        UPDATE terminals SET active = #{active} WHERE id = #{id}
+    </update>
+
+    <update id="heartbeat">
+        UPDATE terminals SET last_seen_at = now() WHERE id = #{id}
+    </update>
+
+</mapper>

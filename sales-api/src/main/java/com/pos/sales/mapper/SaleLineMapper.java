@@ -15,9 +15,9 @@ public interface SaleLineMapper {
 
     List<SaleLine> listBySale(@Param("saleId") Long saleId);
 
-    int deleteBySale(@Param("saleId") Long saleId);
+    void deleteBySale(@Param("saleId") Long saleId);
 
-    int addReturned(@Param("id") Long id, @Param("quantity") BigDecimal quantity);
+    void addReturned(@Param("id") Long id, @Param("quantity") BigDecimal quantity);
 
     long countNotFullyReturned(@Param("saleId") Long saleId);
 }

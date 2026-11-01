@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.user.mapper.TenantMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO tenants (code, name) VALUES (#{code}, #{name})
+    </insert>
+
+    <select id="findById" resultType="com.pos.user.domain.Tenant">
+        SELECT * FROM tenants WHERE id = #{id}
+    </select>
+
+    <select id="findByCode" resultType="com.pos.user.domain.Tenant">
+        SELECT * FROM tenants WHERE upper(code) = upper(#{code})
+    </select>
+
+    <select id="search" resultType="com.pos.user.domain.Tenant">
+        SELECT * FROM tenants
+        <where>
+          <if test="q != null">(code ILIKE #{q} OR name ILIKE #{q})</if>
+        </where>
+        ORDER BY id LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM tenants
+        <where>
+          <if test="q != null">(code ILIKE #{q} OR name ILIKE #{q})</if>
+        </where>
+    </select>
+
+    <update id="updateName">
+        UPDATE tenants SET name = #{name}, updated_at = now() WHERE id = #{id}
+    </update>
+
+    <update id="setStatus">
+        UPDATE tenants SET status = #{status}, updated_at = now() WHERE id = #{id}
+    </update>
+
+    <delete id="delete">
+        DELETE FROM tenants WHERE id = #{id}
+    </delete>
+
+</mapper>

@@ -1,4 +1,4 @@
-package com.pos.common.web;
+package com.pos.common.dto;
 
 import java.time.Instant;
 import java.util.List;

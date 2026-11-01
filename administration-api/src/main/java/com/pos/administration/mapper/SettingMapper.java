@@ -13,5 +13,5 @@ public interface SettingMapper {
     /** Global defaults (store 0) and the overrides of the given store, global first. */
     List<Setting> findEffective(@Param("storeId") Long storeId);
 
-    int upsert(@Param("storeId") Long storeId, @Param("key") String key, @Param("value") String value);
+    void upsert(@Param("storeId") Long storeId, @Param("key") String key, @Param("value") String value);
 }

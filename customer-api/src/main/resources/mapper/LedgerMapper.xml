@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.customer.mapper.LedgerMapper">
+
+    <insert id="insertLoyalty">
+        INSERT INTO loyalty_transactions (customer_id, type, points, balance, ref_type, ref_id, note)
+        VALUES (#{customerId}, #{type}, #{points}, #{balance}, #{refType}, #{refId}, #{note})
+    </insert>
+
+    <select id="loyaltyHistory" resultType="com.pos.customer.domain.LoyaltyTransaction">
+        SELECT * FROM loyalty_transactions WHERE customer_id = #{customerId} ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="loyaltyCount" resultType="java.lang.Long">
+        SELECT count(*) FROM loyalty_transactions WHERE customer_id = #{customerId}
+    </select>
+
+    <insert id="insertCredit">
+        INSERT INTO credit_transactions (customer_id, type, amount, balance, ref_type, ref_id, note)
+        VALUES (#{customerId}, #{type}, #{amount}, #{balance}, #{refType}, #{refId}, #{note})
+    </insert>
+
+    <select id="creditHistory" resultType="com.pos.customer.domain.CreditTransaction">
+        SELECT * FROM credit_transactions WHERE customer_id = #{customerId} ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="creditCount" resultType="java.lang.Long">
+        SELECT count(*) FROM credit_transactions WHERE customer_id = #{customerId}
+    </select>
+
+    <insert id="markProcessed">
+        INSERT INTO processed_events (event_id) VALUES (#{eventId}) ON CONFLICT DO NOTHING
+    </insert>
+
+</mapper>

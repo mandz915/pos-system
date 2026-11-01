@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.reporting.mapper.ReportMapper">
+
+    <insert id="addSale">
+        INSERT INTO sales_daily (store_id, day, sales_count, gross, discount_total, tax_total)
+        VALUES (#{storeId}, #{day}, 1, #{gross}, #{discount}, #{tax})
+        ON CONFLICT (store_id, day) DO UPDATE SET
+            sales_count = sales_daily.sales_count + 1,
+            gross = sales_daily.gross + EXCLUDED.gross,
+            discount_total = sales_daily.discount_total + EXCLUDED.discount_total,
+            tax_total = sales_daily.tax_total + EXCLUDED.tax_total
+    </insert>
+
+    <insert id="addRefund">
+        INSERT INTO sales_daily (store_id, day, refund_count, refund_total)
+        VALUES (#{storeId}, #{day}, 1, #{amount})
+        ON CONFLICT (store_id, day) DO UPDATE SET
+            refund_count = sales_daily.refund_count + 1,
+            refund_total = sales_daily.refund_total + EXCLUDED.refund_total
+    </insert>
+
+    <insert id="addProduct">
+        INSERT INTO product_daily (store_id, day, product_id, sku, name, quantity, revenue)
+        VALUES (#{storeId}, #{day}, #{productId}, #{sku}, #{name}, #{quantity}, #{revenue})
+        ON CONFLICT (store_id, day, product_id) DO UPDATE SET
+            quantity = product_daily.quantity + EXCLUDED.quantity,
+            revenue = product_daily.revenue + EXCLUDED.revenue,
+            sku = COALESCE(EXCLUDED.sku, product_daily.sku),
+            name = COALESCE(EXCLUDED.name, product_daily.name)
+    </insert>
+
+    <insert id="addCashier">
+        INSERT INTO cashier_daily (store_id, day, cashier_id, sales_count, gross)
+        VALUES (#{storeId}, #{day}, #{cashierId}, 1, #{gross})
+        ON CONFLICT (store_id, day, cashier_id) DO UPDATE SET
+            sales_count = cashier_daily.sales_count + 1,
+            gross = cashier_daily.gross + EXCLUDED.gross
+    </insert>
+
+    <insert id="markProcessed">
+        INSERT INTO processed_events (event_id) VALUES (#{eventId}) ON CONFLICT DO NOTHING
+    </insert>
+
+    <select id="daily" resultType="com.pos.reporting.domain.DailySales">
+        SELECT store_id, day, sales_count, gross, discount_total, tax_total, refund_count, refund_total
+        FROM sales_daily
+        WHERE day BETWEEN #{from} AND #{to}
+        <if test="storeId != null">AND store_id = #{storeId}</if>
+        ORDER BY day, store_id
+    </select>
+
+    <select id="topProducts" resultType="com.pos.reporting.domain.ProductSales">
+        SELECT product_id, MAX(sku) AS sku, MAX(name) AS name, SUM(quantity) AS quantity, SUM(revenue) AS revenue
+        FROM product_daily
+        WHERE day BETWEEN #{from} AND #{to}
+        <if test="storeId != null">AND store_id = #{storeId}</if>
+        GROUP BY product_id
+        HAVING SUM(quantity) &gt; 0
+        ORDER BY SUM(revenue) DESC, product_id
+        LIMIT #{limit}
+    </select>
+
+    <select id="byCashier" resultType="com.pos.reporting.domain.CashierSales">
+        SELECT cashier_id, SUM(sales_count) AS sales_count, SUM(gross) AS gross
+        FROM cashier_daily
+        WHERE day BETWEEN #{from} AND #{to}
+        <if test="storeId != null">AND store_id = #{storeId}</if>
+        GROUP BY cashier_id
+        ORDER BY SUM(gross) DESC
+    </select>
+
+</mapper>

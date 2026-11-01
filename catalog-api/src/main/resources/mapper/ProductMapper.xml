@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.catalog.mapper.ProductMapper">
+
+    <sql id="selectWithTax">
+        SELECT p.*, t.code AS tax_code, t.rate AS tax_rate, t.inclusive AS tax_inclusive
+        FROM products p LEFT JOIN tax_rates t ON t.id = p.tax_rate_id
+    </sql>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO products (sku, barcode, name, description, category_id, tax_rate_id, uom, price, cost, image_url, active)
+        VALUES (#{sku}, #{barcode}, #{name}, #{description}, #{categoryId}, #{taxRateId}, #{uom}, #{price}, #{cost}, #{imageUrl}, #{active})
+    </insert>
+
+    <select id="findById" resultType="com.pos.catalog.domain.Product">
+        <include refid="selectWithTax"/>
+         WHERE p.id = #{id}
+    </select>
+
+    <select id="findByBarcode" resultType="com.pos.catalog.domain.Product">
+        <include refid="selectWithTax"/>
+         WHERE p.barcode = #{barcode}
+    </select>
+
+    <select id="findBySku" resultType="com.pos.catalog.domain.Product">
+        <include refid="selectWithTax"/>
+         WHERE p.sku = #{sku}
+    </select>
+
+    <select id="search" resultType="com.pos.catalog.domain.Product">
+        SELECT p.*, t.code AS tax_code, t.rate AS tax_rate, t.inclusive AS tax_inclusive
+        FROM products p LEFT JOIN tax_rates t ON t.id = p.tax_rate_id
+        <where>
+          <if test="q != null">AND (p.name ILIKE #{q} OR p.sku ILIKE #{q} OR p.barcode ILIKE #{q})</if>
+          <if test="categoryId != null">AND p.category_id = #{categoryId}</if>
+          <if test="active != null">AND p.active = #{active}</if>
+        </where>
+        ORDER BY p.name LIMIT #{size} OFFSET #{offset}
+    </select>
+
+    <select id="count" resultType="java.lang.Long">
+        SELECT count(*) FROM products p
+        <where>
+          <if test="q != null">AND (p.name ILIKE #{q} OR p.sku ILIKE #{q} OR p.barcode ILIKE #{q})</if>
+          <if test="categoryId != null">AND p.category_id = #{categoryId}</if>
+          <if test="active != null">AND p.active = #{active}</if>
+        </where>
+    </select>
+
+    <update id="update">
+        UPDATE products SET sku = #{sku}, barcode = #{barcode}, name = #{name}, description = #{description},
+            category_id = #{categoryId}, tax_rate_id = #{taxRateId}, uom = #{uom}, price = #{price}, cost = #{cost},
+            image_url = #{imageUrl}, active = #{active}, updated_at = now()
+        WHERE id = #{id}
+    </update>
+
+    <update id="setActive">
+        UPDATE products SET active = #{active}, updated_at = now() WHERE id = #{id}
+    </update>
+
+</mapper>

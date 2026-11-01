@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.pos.catalog.mapper.CategoryMapper">
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id" keyColumn="id">
+        INSERT INTO categories (name, parent_id, active) VALUES (#{name}, #{parentId}, #{active})
+    </insert>
+
+    <select id="findById" resultType="com.pos.catalog.domain.Category">
+        SELECT * FROM categories WHERE id = #{id}
+    </select>
+
+    <select id="findAll" resultType="com.pos.catalog.domain.Category">
+        SELECT * FROM categories ORDER BY name
+    </select>
+
+    <update id="update">
+        UPDATE categories SET name = #{name}, parent_id = #{parentId} WHERE id = #{id}
+    </update>
+
+    <update id="setActive">
+        UPDATE categories SET active = #{active} WHERE id = #{id}
+    </update>
+
+</mapper>

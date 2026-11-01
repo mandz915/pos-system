@@ -13,7 +13,7 @@ import com.pos.payment.domain.ReconciliationRow;
 @Mapper
 public interface PaymentMapper {
 
-    int insert(Payment payment);
+    void insert(Payment payment);
 
     Payment findById(@Param("id") Long id);
 
