@@ -13,9 +13,9 @@ import com.pos.administration.domain.Terminal;
 import com.pos.administration.mapper.SettingMapper;
 import com.pos.administration.mapper.StoreMapper;
 import com.pos.administration.mapper.TerminalMapper;
-import com.pos.administration.controller.AdminDtos.SettingRequest;
-import com.pos.administration.controller.AdminDtos.StoreRequest;
-import com.pos.administration.controller.AdminDtos.TerminalRequest;
+import com.pos.administration.dto.AdminDtos.SettingRequest;
+import com.pos.administration.dto.AdminDtos.StoreRequest;
+import com.pos.administration.dto.AdminDtos.TerminalRequest;
 import com.pos.common.error.ApiException;
 import com.pos.common.security.CurrentUser;
 
@@ -121,11 +121,19 @@ public class AdminService {
     }
 
     // ---- settings
+    private static final Map<String, String> DEFAULT_SETTINGS = Map.of(
+            "currency", "PHP",
+            "receipt.header", "POS System",
+            "receipt.footer", "Thank you for shopping with us!",
+            "tax.default_vat_rate", "12",
+            "loyalty.points_per_currency", "0.01");
+
     /** Effective settings of a store: global defaults overlaid with the store's own values. */
     @Transactional(readOnly = true)
     public Map<String, String> effectiveSettings(Long storeId) {
         Long store = storeId == null ? 0L : storeId;
-        Map<String, String> result = new LinkedHashMap<>();
+        // A new company has no settings rows yet: built-in defaults first, then its global and per-store values.
+        Map<String, String> result = new LinkedHashMap<>(DEFAULT_SETTINGS);
         for (Setting setting : settings.findEffective(store)) {
             result.put(setting.getSettingKey(), setting.getSettingValue());
         }

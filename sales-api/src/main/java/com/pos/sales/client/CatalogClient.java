@@ -1,6 +1,9 @@
 package com.pos.sales.client;
 
 import java.math.BigDecimal;
+import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
@@ -10,16 +13,34 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.pos.common.cache.CacheNames;
+import com.pos.common.tenant.TenantContext;
+import com.pos.common.cache.JsonCache;
 import com.pos.common.error.ApiException;
+import com.pos.common.pricing.PromotionRule;
 import com.pos.common.security.CurrentUser;
 
 /** Reads authoritative prices and tax settings from catalog-api, on behalf of the signed-in user. */
 public class CatalogClient {
 
-    private final RestClient rest;
+    private static final Duration PROMOTIONS_LOCAL_TTL = Duration.ofSeconds(10);
+    private static final Duration PROMOTIONS_SHARED_TTL = Duration.ofSeconds(30);
 
-    public CatalogClient(RestClient rest) {
+    private final RestClient rest;
+    private final JsonCache cache;
+    /** One snapshot per tenant: promotions are a company's own and must never be served to another company. */
+    private final ConcurrentHashMap<Long, PromotionSnapshot> promotions = new ConcurrentHashMap<>();
+
+    public CatalogClient(RestClient rest, JsonCache cache) {
         this.rest = rest;
+        this.cache = cache;
+    }
+
+    private record PromotionSnapshot(List<PromotionRule> rules, long loadedAtMillis) {
+    }
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record TaxInfo(Long id, String code, BigDecimal rate, boolean inclusive) {
     }
 
     @JsonIgnoreProperties(ignoreUnknown = true)
@@ -27,14 +48,57 @@ public class CatalogClient {
             Long id,
             String sku,
             String name,
+            Long categoryId,
             BigDecimal price,
+            TaxInfo tax,
             BigDecimal taxRate,
             boolean taxInclusive,
             BigDecimal discountPerUnit,
             boolean active) {
     }
 
+    /**
+     * Promotions that are live now. Read through three layers: a 10 second in-process snapshot, the shared cache
+     * (evicted by catalog-api when a promotion changes) and finally catalog-api itself.
+     */
+    public List<PromotionRule> livePromotions() {
+        Long tenant = TenantContext.require();
+        PromotionSnapshot local = promotions.get(tenant);
+        long now = System.currentTimeMillis();
+        if (local != null && now - local.loadedAtMillis() < PROMOTIONS_LOCAL_TTL.toMillis()) {
+            return local.rules();
+        }
+        List<PromotionRule> rules = cache.get(CacheNames.CATALOG, "promotions:live", PromotionRule[].class)
+                .map(List::of)
+                .orElse(null);
+        if (rules == null) {
+            rules = fetchLivePromotions();
+            cache.put(CacheNames.CATALOG, "promotions:live", rules.toArray(new PromotionRule[0]), PROMOTIONS_SHARED_TTL);
+        }
+        promotions.put(tenant, new PromotionSnapshot(rules, now));
+        return rules;
+    }
+
+    private List<PromotionRule> fetchLivePromotions() {
+        try {
+            PromotionRule[] body = rest.get()
+                    .uri("/api/catalog/promotions?liveOnly=true")
+                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + CurrentUser.token())
+                    .retrieve()
+                    .body(PromotionRule[].class);
+            return body == null ? List.of() : List.of(body);
+        } catch (HttpStatusCodeException e) {
+            throw new ApiException(HttpStatus.BAD_GATEWAY, "Catalog service error (" + e.getStatusCode().value() + ")");
+        } catch (ResourceAccessException e) {
+            throw new ApiException(HttpStatus.SERVICE_UNAVAILABLE, "Catalog service is unavailable");
+        }
+    }
+
     public ProductInfo getProduct(Long productId) {
+        ProductInfo cached = cache.get(CacheNames.CATALOG, CacheNames.productById(productId), ProductInfo.class).orElse(null);
+        if (cached != null) {
+            return cached;
+        }
         try {
             ProductInfo product = rest.get()
                     .uri("/api/catalog/products/{id}", productId)

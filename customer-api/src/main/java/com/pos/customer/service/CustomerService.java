@@ -9,15 +9,15 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.pos.common.error.ApiException;
 import com.pos.common.util.Money;
-import com.pos.common.web.PageResult;
-import com.pos.common.web.Paging;
+import com.pos.common.dto.PageResult;
+import com.pos.common.dto.Paging;
 import com.pos.customer.domain.CreditTransaction;
 import com.pos.customer.domain.Customer;
 import com.pos.customer.domain.LoyaltyTransaction;
 import com.pos.customer.mapper.CustomerMapper;
 import com.pos.customer.mapper.LedgerMapper;
-import com.pos.customer.web.CustomerDtos.CreditRequest;
-import com.pos.customer.web.CustomerDtos.CustomerRequest;
+import com.pos.customer.dto.CustomerDtos.CreditRequest;
+import com.pos.customer.dto.CustomerDtos.CustomerRequest;
 
 import lombok.RequiredArgsConstructor;
 

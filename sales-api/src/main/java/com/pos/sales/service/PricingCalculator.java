@@ -27,8 +27,14 @@ public final class PricingCalculator {
 
     public static LineAmounts line(BigDecimal quantity, BigDecimal unitPrice, BigDecimal discountPerUnit,
                                    BigDecimal taxRate, boolean taxInclusive) {
+        return lineWithDiscount(quantity, unitPrice, Money.round(discountPerUnit.multiply(quantity)), taxRate, taxInclusive);
+    }
+
+    /** Same as {@link #line} when the discount of the whole line is already known (quantity based promotions). */
+    public static LineAmounts lineWithDiscount(BigDecimal quantity, BigDecimal unitPrice, BigDecimal lineDiscount,
+                                               BigDecimal taxRate, boolean taxInclusive) {
         BigDecimal gross = Money.round(unitPrice.multiply(quantity));
-        BigDecimal discount = Money.round(discountPerUnit.multiply(quantity));
+        BigDecimal discount = Money.round(lineDiscount).min(gross);
         BigDecimal net = gross.subtract(discount);
         if (taxInclusive) {
             BigDecimal tax = Money.round(net.multiply(taxRate).divide(Money.HUNDRED.add(taxRate), 10, RoundingMode.HALF_UP));

@@ -15,6 +15,8 @@ metadata:
 data:
   DB_HOST: postgres.pos.svc.cluster.local
   KAFKA_BOOTSTRAP: kafka.pos.svc.cluster.local:9092
+  REDIS_HOST: redis.pos.svc.cluster.local
+  REDIS_PORT: "6379"
   USER_API_URL: http://user-api:8081
   INVENTORY_API_URL: http://inventory-api:8082
   SALES_API_URL: http://sales-api:8083
@@ -34,9 +36,15 @@ metadata:
 type: Opaque
 stringData:
   JWT_SECRET: replace-me-with-at-least-32-random-characters
-  DB_USER: pos
-  DB_PASSWORD: replace-me
+  # Owner role: runs the Flyway migrations. App role: what the services use at runtime; it MUST be a plain role
+  # (no superuser, no BYPASSRLS) or tenant isolation does not apply; services refuse to start otherwise.
+  DB_OWNER_USER: pos
+  DB_OWNER_PASSWORD: replace-me
+  DB_USER: pos_app
+  DB_PASSWORD: replace-me-too
   ADMIN_PASSWORD: replace-me
+  PLATFORM_PASSWORD: replace-me
+  REDIS_PASSWORD: ""
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -66,10 +74,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: USER_API_URL
           valueFrom: {configMapKeyRef: {name: pos-config, key: USER_API_URL}}
         - name: INVENTORY_API_URL
@@ -141,14 +159,26 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_user
         - name: ADMIN_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: ADMIN_PASSWORD}}
+        - name: PLATFORM_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: PLATFORM_PASSWORD}}
         readinessProbe:
           httpGet: {path: /actuator/health/readiness, port: 8081}
           initialDelaySeconds: 20
@@ -200,10 +230,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_inventory
         readinessProbe:
@@ -257,10 +297,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_sales
         - name: CATALOG_API_URL
@@ -318,10 +368,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_administration
         readinessProbe:
@@ -375,10 +435,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_catalog
         readinessProbe:
@@ -432,10 +502,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_payment
         readinessProbe:
@@ -489,10 +569,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_customer
         readinessProbe:
@@ -546,10 +636,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_purchasing
         readinessProbe:
@@ -603,10 +703,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_reporting
         readinessProbe:
@@ -660,10 +770,20 @@ spec:
           valueFrom: {configMapKeyRef: {name: pos-config, key: KAFKA_BOOTSTRAP}}
         - name: JWT_SECRET
           valueFrom: {secretKeyRef: {name: pos-secrets, key: JWT_SECRET}}
+        - name: REDIS_HOST
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_HOST}}
+        - name: REDIS_PORT
+          valueFrom: {configMapKeyRef: {name: pos-config, key: REDIS_PORT}}
+        - name: REDIS_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: REDIS_PASSWORD}}
         - name: DB_USER
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_USER}}
         - name: DB_PASSWORD
           valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_PASSWORD}}
+        - name: FLYWAY_USER
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_USER}}
+        - name: FLYWAY_PASSWORD
+          valueFrom: {secretKeyRef: {name: pos-secrets, key: DB_OWNER_PASSWORD}}
         - name: DB_URL
           value: jdbc:postgresql://$(DB_HOST):5432/pos_notification
         readinessProbe:
@@ -706,3 +826,46 @@ spec:
             name: gateway-api
             port:
               number: 8080
+---
+# Single-node Redis for development. It holds only disposable data (caches, rate-limit counters, the token blocklist),
+# but in production use a managed Redis with replication (ElastiCache, Memorystore, Azure Cache) and set REDIS_HOST,
+# REDIS_PASSWORD and REDIS_SSL accordingly: a restart of this pod clears the blocklist, so logged-out tokens would work
+# again until they expire.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis
+  namespace: pos
+  labels: {app: redis}
+spec:
+  replicas: 1
+  selector:
+    matchLabels: {app: redis}
+  template:
+    metadata:
+      labels: {app: redis}
+    spec:
+      containers:
+      - name: redis
+        image: redis:7-alpine
+        args: ["--maxmemory", "256mb", "--maxmemory-policy", "volatile-lru", "--appendonly", "no"]
+        ports:
+        - containerPort: 6379
+        readinessProbe:
+          exec: {command: ["redis-cli", "ping"]}
+          periodSeconds: 5
+        resources:
+          requests: {cpu: 100m, memory: 128Mi}
+          limits: {memory: 320Mi}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis
+  namespace: pos
+spec:
+  selector: {app: redis}
+  ports:
+  - port: 6379
+    targetPort: 6379
+

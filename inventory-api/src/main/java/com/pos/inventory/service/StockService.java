@@ -15,16 +15,16 @@ import com.pos.common.event.LowStockEvent;
 import com.pos.common.event.Topics;
 import com.pos.common.outbox.OutboxService;
 import com.pos.common.security.CurrentUser;
-import com.pos.common.web.PageResult;
-import com.pos.common.web.Paging;
+import com.pos.common.dto.PageResult;
+import com.pos.common.dto.Paging;
 import com.pos.inventory.domain.MovementType;
 import com.pos.inventory.domain.StockLevel;
 import com.pos.inventory.domain.StockMovement;
 import com.pos.inventory.mapper.MovementMapper;
 import com.pos.inventory.mapper.StockLevelMapper;
-import com.pos.inventory.web.InventoryDtos.AdjustRequest;
-import com.pos.inventory.web.InventoryDtos.ReceiveRequest;
-import com.pos.inventory.web.InventoryDtos.TransferRequest;
+import com.pos.inventory.dto.InventoryDtos.AdjustRequest;
+import com.pos.inventory.dto.InventoryDtos.ReceiveRequest;
+import com.pos.inventory.dto.InventoryDtos.TransferRequest;
 
 import lombok.RequiredArgsConstructor;
 

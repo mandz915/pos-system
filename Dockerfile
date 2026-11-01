@@ -3,6 +3,7 @@ FROM maven:3.9-eclipse-temurin-21 AS build
 WORKDIR /workspace
 COPY pom.xml .
 COPY pos-common/pom.xml pos-common/
+COPY pos-test-support/pom.xml pos-test-support/
 COPY gateway-api/pom.xml gateway-api/
 COPY user-api/pom.xml user-api/
 COPY inventory-api/pom.xml inventory-api/
@@ -17,7 +18,7 @@ COPY notification-api/pom.xml notification-api/
 RUN mvn -B -q -DskipTests dependency:go-offline || true
 COPY . .
 ARG MODULE
-RUN mvn -B -q -pl ${MODULE} -am -DskipTests package
+RUN mvn -B -q -pl ${MODULE} -am -Dmaven.test.skip=true package
 
 FROM eclipse-temurin:21-jre
 ARG MODULE

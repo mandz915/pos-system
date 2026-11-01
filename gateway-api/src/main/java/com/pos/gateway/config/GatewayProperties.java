@@ -20,8 +20,8 @@ public record GatewayProperties(
 
     public record RateLimit(
             @DefaultValue("true") boolean enabled,
-            @DefaultValue("600") int requestsPerMinute,
-            /** Only enable behind a trusted load balancer that sets X-Forwarded-For; clients could spoof it otherwise. */
+            @DefaultValue("1200") int requestsPerMinute,
+            @DefaultValue("60") int anonymousPerMinute,
             @DefaultValue("false") boolean trustForwardedFor) {
     }
 }

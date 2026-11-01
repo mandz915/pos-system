@@ -1,5 +1,6 @@
 package com.pos.common.config;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
@@ -25,7 +26,8 @@ public class PosOutboxAutoConfiguration {
     @Bean
     public OutboxRelay outboxRelay(JdbcTemplate jdbcTemplate,
                                    KafkaTemplate<String, String> kafkaTemplate,
-                                   PlatformTransactionManager transactionManager) {
-        return new OutboxRelay(jdbcTemplate, kafkaTemplate, transactionManager);
+                                   PlatformTransactionManager transactionManager,
+                                   @Value("${pos.outbox.batch-size:500}") int batchSize) {
+        return new OutboxRelay(jdbcTemplate, kafkaTemplate, transactionManager, batchSize);
     }
 }

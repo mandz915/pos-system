@@ -13,6 +13,7 @@ import com.pos.common.util.Money;
 import com.pos.reporting.domain.CashierSales;
 import com.pos.reporting.domain.DailySales;
 import com.pos.reporting.domain.ProductSales;
+import com.pos.reporting.dto.Summary;
 import com.pos.reporting.mapper.ReportMapper;
 
 import lombok.RequiredArgsConstructor;
@@ -25,11 +26,6 @@ public class ReportService {
     private static final int MAX_RANGE_DAYS = 366;
 
     private final ReportMapper reports;
-
-    public record Summary(Long storeId, LocalDate from, LocalDate to, long salesCount, BigDecimal gross,
-                          BigDecimal discountTotal, BigDecimal taxTotal, long refundCount, BigDecimal refundTotal,
-                          BigDecimal netSales, BigDecimal averageSale) {
-    }
 
     public List<DailySales> daily(Long storeId, LocalDate from, LocalDate to) {
         Long store = scope(storeId);
@@ -63,7 +59,7 @@ public class ReportService {
     public List<ProductSales> topProducts(Long storeId, LocalDate from, LocalDate to, Integer limit) {
         Long store = scope(storeId);
         checkRange(from, to);
-        int size = limit == null ? 10 : Math.max(1, Math.min(limit, 100));
+        int size = limit == null ? 10 : Math.clamp(limit, 1, 100);
         return reports.topProducts(store, from, to, size);
     }
 

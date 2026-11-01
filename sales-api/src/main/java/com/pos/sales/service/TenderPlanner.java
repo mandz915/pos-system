@@ -7,7 +7,7 @@ import java.util.List;
 import com.pos.common.error.ApiException;
 import com.pos.common.model.PaymentMethod;
 import com.pos.common.util.Money;
-import com.pos.sales.web.SalesDtos.PaymentLine;
+import com.pos.sales.dto.SalesDtos.PaymentLine;
 
 /**
  * Turns what the customer offers into what is credited to the sale. Non-cash tenders must be exact (they can never

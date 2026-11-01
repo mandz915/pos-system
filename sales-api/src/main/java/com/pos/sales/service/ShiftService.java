@@ -19,10 +19,10 @@ import com.pos.sales.domain.Shift;
 import com.pos.sales.domain.ShiftSalesTotals;
 import com.pos.sales.domain.ShiftStatus;
 import com.pos.sales.mapper.ShiftMapper;
-import com.pos.sales.web.SalesDtos.CashMovementRequest;
-import com.pos.sales.web.SalesDtos.CloseShiftRequest;
-import com.pos.sales.web.SalesDtos.OpenShiftRequest;
-import com.pos.sales.web.SalesDtos.ShiftReport;
+import com.pos.sales.dto.SalesDtos.CashMovementRequest;
+import com.pos.sales.dto.SalesDtos.CloseShiftRequest;
+import com.pos.sales.dto.SalesDtos.OpenShiftRequest;
+import com.pos.sales.dto.SalesDtos.ShiftReport;
 
 import lombok.RequiredArgsConstructor;
 

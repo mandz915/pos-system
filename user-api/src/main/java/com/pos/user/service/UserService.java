@@ -11,14 +11,16 @@ import com.pos.common.error.ApiException;
 import com.pos.common.security.AuthenticatedUser;
 import com.pos.common.security.CurrentUser;
 import com.pos.common.security.Roles;
-import com.pos.common.web.PageResult;
-import com.pos.common.web.Paging;
+import com.pos.common.security.TokenRevocations;
+import com.pos.common.util.AfterCommit;
+import com.pos.common.dto.PageResult;
+import com.pos.common.dto.Paging;
 import com.pos.user.domain.User;
 import com.pos.user.mapper.UserMapper;
-import com.pos.user.web.UserDtos.ChangePasswordRequest;
-import com.pos.user.web.UserDtos.CreateUserRequest;
-import com.pos.user.web.UserDtos.UpdateUserRequest;
-import com.pos.user.web.UserDtos.UserView;
+import com.pos.user.dto.UserDtos.ChangePasswordRequest;
+import com.pos.user.dto.UserDtos.CreateUserRequest;
+import com.pos.user.dto.UserDtos.UpdateUserRequest;
+import com.pos.user.dto.UserDtos.UserView;
 
 import lombok.RequiredArgsConstructor;
 
@@ -33,6 +35,7 @@ public class UserService {
     private final PasswordEncoder passwordEncoder;
     private final AuthService authService;
     private final AuditService audit;
+    private final TokenRevocations revocations;
 
     @Transactional(readOnly = true)
     public PageResult<UserView> list(String q, Integer page, Integer size) {
@@ -79,6 +82,7 @@ public class UserService {
         users.clearRoles(id);
         request.roles().forEach(role -> users.addRole(id, role));
         audit.record("USER_UPDATED", "user", String.valueOf(id), "roles=" + request.roles());
+        revokeSessions(id); // old tokens still carry the previous roles and store
         return authService.toView(require(id));
     }
 
@@ -90,6 +94,9 @@ public class UserService {
         }
         users.setActive(id, active);
         audit.record(active ? "USER_ENABLED" : "USER_DISABLED", "user", String.valueOf(id), null);
+        if (!active) {
+            revokeSessions(id);
+        }
         return authService.toView(require(id));
     }
 
@@ -98,6 +105,7 @@ public class UserService {
         assertCanManage(user.getStoreId());
         users.updatePassword(id, passwordEncoder.encode(newPassword));
         audit.record("PASSWORD_RESET", "user", String.valueOf(id), null);
+        revokeSessions(id);
     }
 
     public void setPin(Long id, String pin) {
@@ -115,10 +123,25 @@ public class UserService {
         }
         users.updatePassword(id, passwordEncoder.encode(request.newPassword()));
         audit.record("PASSWORD_CHANGED", "user", String.valueOf(id), null);
+        revokeSessions(id);
+    }
+
+    /** Signs the user out everywhere: every token issued up to now stops working (a new login works). */
+    public void forceSignOut(Long id) {
+        User user = require(id);
+        assertCanManage(user.getStoreId());
+        audit.record("SESSIONS_REVOKED", "user", String.valueOf(id), null);
+        revokeSessions(id);
+    }
+
+    private void revokeSessions(Long id) {
+        // After commit, so a rolled back change never signs anybody out and a new login cannot race the update.
+        AfterCommit.run(() -> revocations.revokeUser(id));
     }
 
     public List<String> roles() {
-        return users.allRoles();
+        // The platform role belongs to platform operators and is never offered to a company.
+        return users.allRoles().stream().filter(VALID_ROLES::contains).toList();
     }
 
     private User require(Long id) {

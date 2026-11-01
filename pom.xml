@@ -20,6 +20,7 @@
 
     <modules>
         <module>pos-common</module>
+        <module>pos-test-support</module>
         <module>gateway-api</module>
         <module>user-api</module>
         <module>inventory-api</module>
@@ -56,6 +57,11 @@
             <dependency>
                 <groupId>com.pos</groupId>
                 <artifactId>pos-common</artifactId>
+                <version>${project.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.pos</groupId>
+                <artifactId>pos-test-support</artifactId>
                 <version>${project.version}</version>
             </dependency>
         </dependencies>

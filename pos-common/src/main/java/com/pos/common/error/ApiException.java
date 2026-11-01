@@ -1,11 +1,13 @@
 package com.pos.common.error;
 
+import lombok.Getter;
 import org.springframework.http.HttpStatus;
 
 /**
  * Business/validation error that is translated into an HTTP response by
- * {@link com.pos.common.web.GlobalExceptionHandler}.
+ * {@link com.pos.common.controller.GlobalExceptionHandler}.
  */
+@Getter
 public class ApiException extends RuntimeException {
 
     private final HttpStatus status;
@@ -13,10 +15,6 @@ public class ApiException extends RuntimeException {
     public ApiException(HttpStatus status, String message) {
         super(message);
         this.status = status;
-    }
-
-    public HttpStatus getStatus() {
-        return status;
     }
 
     public static ApiException badRequest(String message) {

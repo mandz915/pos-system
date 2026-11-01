@@ -2,8 +2,6 @@ package com.pos.inventory.service;
 
 import java.math.BigDecimal;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +14,7 @@ import com.pos.common.event.Topics;
 import com.pos.inventory.domain.MovementType;
 import com.pos.inventory.mapper.ProcessedEventMapper;
 
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -24,9 +23,9 @@ import lombok.RequiredArgsConstructor;
  */
 @Component
 @RequiredArgsConstructor
+@Slf4j
 public class InventoryEventListener {
 
-    private static final Logger log = LoggerFactory.getLogger(InventoryEventListener.class);
     private static final String GROUP = "inventory-api";
 
     private final StockService stock;

@@ -23,6 +23,7 @@ public class Product {
     private Instant updatedAt;
 
     // Filled by the queries that join tax_rates (read only).
+    private String taxCode;
     private BigDecimal taxRate;
     private Boolean taxInclusive;
 }

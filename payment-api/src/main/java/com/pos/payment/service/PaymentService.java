@@ -21,8 +21,8 @@ import com.pos.payment.domain.ReconciliationRow;
 import com.pos.payment.gateway.PaymentGateway;
 import com.pos.payment.gateway.PaymentGateway.GatewayResult;
 import com.pos.payment.mapper.PaymentMapper;
-import com.pos.payment.web.PaymentDtos.ChargeRequest;
-import com.pos.payment.web.PaymentDtos.RefundCall;
+import com.pos.payment.dto.PaymentDtos.ChargeRequest;
+import com.pos.payment.dto.PaymentDtos.RefundCall;
 
 import lombok.RequiredArgsConstructor;
 

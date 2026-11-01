@@ -14,8 +14,8 @@ import com.pos.inventory.domain.StockCountLine;
 import com.pos.inventory.domain.StockLevel;
 import com.pos.inventory.mapper.StockCountMapper;
 import com.pos.inventory.mapper.StockLevelMapper;
-import com.pos.inventory.web.InventoryDtos.CountLineRequest;
-import com.pos.inventory.web.InventoryDtos.CountView;
+import com.pos.inventory.dto.InventoryDtos.CountLineRequest;
+import com.pos.inventory.dto.InventoryDtos.CountView;
 
 import lombok.RequiredArgsConstructor;
 

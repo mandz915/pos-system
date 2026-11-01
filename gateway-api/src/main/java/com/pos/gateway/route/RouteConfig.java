@@ -21,7 +21,7 @@ public class RouteConfig {
 
     /** service key (see {@link GatewayProperties#services()}) to the path prefixes it owns. */
     static final String[][] ROUTES = {
-            {"user", "/api/auth/**", "/api/users/**", "/api/roles/**", "/api/audit/**"},
+            {"user", "/api/auth/**", "/api/users/**", "/api/roles/**", "/api/audit/**", "/api/platform/**"},
             {"inventory", "/api/inventory/**"},
             {"sales", "/api/sales/**"},
             {"administration", "/api/admin/**"},

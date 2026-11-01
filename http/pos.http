@@ -1,11 +1,11 @@
 ### POS System: end-to-end walkthrough for the IntelliJ HTTP Client (run the requests top to bottom).
 ### Pick the "local" environment in the top right of the editor. Everything goes through the gateway.
 
-### 1. Log in as the bootstrap administrator (token is stored for the following requests)
+### 1. Log in as the administrator of the demo company DEFAULT (the "tenant" is the company code; token is stored)
 POST {{gateway}}/api/auth/login
 Content-Type: application/json
 
-{ "username": "admin", "password": "Admin#12345" }
+{ "tenant": "DEFAULT", "username": "admin", "password": "Admin#12345" }
 
 > {% client.global.set("token", response.body.accessToken); %}
 
@@ -123,8 +123,153 @@ Authorization: Bearer {{token}}
 POST {{gateway}}/api/auth/pin-login
 Content-Type: application/json
 
-{ "username": "cashier1", "pin": "1234" }
+{ "tenant": "DEFAULT", "username": "cashier1", "pin": "1234" }
 
 ### 17. Queued notifications (low stock, goods received)
 GET {{gateway}}/api/notifications
 Authorization: Bearer {{token}}
+
+### 18. Create a promotion: buy 2 get 1 free on the product, store 1 only, automatic (no coupon)
+POST {{gateway}}/api/catalog/promotions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "code": "COFFEE-B2G1", "name": "Buy 2 get 1 free", "type": "BUY_X_GET_Y",
+  "buyQty": 2, "getQty": 1, "productId": {{productId}}, "storeId": 1 }
+
+### 19. Create a coupon promotion: 15.00 off per unit, only when the cashier enters WELCOME20, needs 2 or more units
+POST {{gateway}}/api/catalog/promotions
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "code": "WELCOME", "name": "Welcome coupon", "type": "FIXED", "value": 15.00,
+  "minQty": 2, "couponCode": "WELCOME20", "endsAt": "2030-12-31T00:00:00Z" }
+
+### 20. Ring up 3 coffees with the coupon (buy-2-get-1 and the coupon compete: the larger discount wins, they do not stack)
+POST {{gateway}}/api/sales
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "clientRef": "{{$uuid}}", "storeId": 1, "terminalId": 1, "couponCodes": ["WELCOME20"],
+  "lines": [ { "productId": {{productId}}, "quantity": 3 } ] }
+
+### 21. Supervisor-only: override the tax of one line with a tax object (zero-rated here). The tax object is optional.
+POST {{gateway}}/api/sales
+Authorization: Bearer {{token}}
+Content-Type: application/json
+
+{ "clientRef": "{{$uuid}}", "storeId": 1, "terminalId": 1,
+  "lines": [ { "productId": {{productId}}, "quantity": 1,
+               "tax": { "code": "EXEMPT", "rate": 0, "inclusive": true } } ] }
+
+### 22. A product now shows its tax as one optional object (tax is null for an untaxed product)
+GET {{gateway}}/api/catalog/products/{{productId}}
+Authorization: Bearer {{token}}
+
+### 23. Sign out: the token is revoked immediately (the next request with it returns 401)
+POST {{gateway}}/api/auth/logout
+Authorization: Bearer {{token}}
+
+### 24. Force a user off every device (manager/admin): all their tokens stop working
+POST {{gateway}}/api/users/2/sign-out
+Authorization: Bearer {{token}}
+
+
+### ======================= Multiple companies (tenants), each with its own stores =======================
+### Steps 25 onward: the platform operator creates a client company; that company's administrator sets up its
+### own stores, catalog and users. Companies never see each other's data.
+
+### 25. Log in as the platform operator (no "tenant"; first start creates platform / Platform#12345)
+POST {{gateway}}/api/auth/login
+Content-Type: application/json
+
+{ "username": "platform", "password": "Platform#12345" }
+
+> {% client.global.set("platformToken", response.body.accessToken); %}
+
+### 26. Create a client company with its first administrator
+POST {{gateway}}/api/platform/tenants
+Authorization: Bearer {{platformToken}}
+Content-Type: application/json
+
+{ "code": "ACME", "name": "Acme Retail Inc.", "adminUsername": "boss", "adminPassword": "Boss#12345" }
+
+> {% client.global.set("tenantId", response.body.id); %}
+
+### 27. List companies
+GET {{gateway}}/api/platform/tenants
+Authorization: Bearer {{platformToken}}
+
+### 28. Log in as the new company's administrator
+POST {{gateway}}/api/auth/login
+Content-Type: application/json
+
+{ "tenant": "ACME", "username": "boss", "password": "Boss#12345" }
+
+> {% client.global.set("acmeToken", response.body.accessToken); %}
+
+### 29. The company starts empty: create its first store (ids are global; use the id in the response)
+POST {{gateway}}/api/admin/stores
+Authorization: Bearer {{acmeToken}}
+Content-Type: application/json
+
+{ "code": "MAIN", "name": "Acme Flagship" }
+
+> {% client.global.set("acmeStoreId", response.body.id); %}
+
+### 30. A second store (a company can have as many as it needs; the code only has to be unique within the company)
+POST {{gateway}}/api/admin/stores
+Authorization: Bearer {{acmeToken}}
+Content-Type: application/json
+
+{ "code": "NORTH", "name": "Acme North" }
+
+### 31. Its own catalog: tax rate, category and product (same SKUs as other companies are fine)
+POST {{gateway}}/api/catalog/tax-rates
+Authorization: Bearer {{acmeToken}}
+Content-Type: application/json
+
+{ "code": "VAT", "name": "VAT 12%", "rate": 12, "inclusive": true }
+
+> {% client.global.set("acmeTaxId", response.body.id); %}
+
+###
+POST {{gateway}}/api/catalog/categories
+Authorization: Bearer {{acmeToken}}
+Content-Type: application/json
+
+{ "name": "General" }
+
+> {% client.global.set("acmeCategoryId", response.body.id); %}
+
+###
+POST {{gateway}}/api/catalog/products
+Authorization: Bearer {{acmeToken}}
+Content-Type: application/json
+
+{ "sku": "COFFEE-001", "name": "Brewed Coffee 12oz", "categoryId": {{acmeCategoryId}},
+  "taxRateId": {{acmeTaxId}}, "price": 99.00 }
+
+### 32. Isolation: ACME sees only its own product; the DEFAULT company's product ({{productId}}) is a 404 for ACME
+GET {{gateway}}/api/catalog/products?q=COFFEE
+Authorization: Bearer {{acmeToken}}
+
+###
+GET {{gateway}}/api/catalog/products/{{productId}}
+Authorization: Bearer {{acmeToken}}
+
+### 33. The platform operator manages companies but owns no business data (an empty list or 403, never a company's products)
+GET {{gateway}}/api/catalog/products
+Authorization: Bearer {{platformToken}}
+
+### 34. Suspend a company: nobody can log in and everybody signed in is signed out at once
+POST {{gateway}}/api/platform/tenants/{{tenantId}}/suspend
+Authorization: Bearer {{platformToken}}
+
+### 35. The suspended company's token no longer works (401) and logging in is refused (403)
+GET {{gateway}}/api/auth/me
+Authorization: Bearer {{acmeToken}}
+
+### 36. Reactivate it
+POST {{gateway}}/api/platform/tenants/{{tenantId}}/activate
+Authorization: Bearer {{platformToken}}

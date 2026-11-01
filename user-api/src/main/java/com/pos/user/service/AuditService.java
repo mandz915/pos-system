@@ -4,8 +4,8 @@ import org.springframework.stereotype.Service;
 
 import com.pos.common.security.AuthenticatedUser;
 import com.pos.common.security.CurrentUser;
-import com.pos.common.web.PageResult;
-import com.pos.common.web.Paging;
+import com.pos.common.dto.PageResult;
+import com.pos.common.dto.Paging;
 import com.pos.user.domain.AuditEntry;
 import com.pos.user.mapper.AuditMapper;
 

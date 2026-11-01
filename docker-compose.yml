@@ -5,19 +5,36 @@ name: pos-system
 services:
   postgres:
     image: postgres:17-alpine
+    # Ten services x up to 30 pooled connections each. In production put PgBouncer in front instead.
+    command: ["postgres", "-c", "max_connections=500", "-c", "shared_buffers=256MB"]
     environment:
-      POSTGRES_USER: ${DB_USER:-pos}
-      POSTGRES_PASSWORD: ${DB_PASSWORD:-pos}
+      # The owner runs the migrations; the services connect as the plain app role (see scripts/init-databases.sh).
+      POSTGRES_USER: ${DB_OWNER_USER:-pos}
+      POSTGRES_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
       POSTGRES_DB: postgres
+      APP_DB_USER: ${DB_USER:-pos_app}
+      APP_DB_PASSWORD: ${DB_PASSWORD:-pos_app}
     ports:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./scripts/init-databases.sql:/docker-entrypoint-initdb.d/01-init-databases.sql:ro
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/01-init-databases.sh:ro
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-pos}"]
+      test: ["CMD-SHELL", "pg_isready -U ${DB_OWNER_USER:-pos}"]
       interval: 5s
       timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    # Only disposable data lives here (caches, rate-limit counters, token blocklist): no persistence needed.
+    command: ["redis-server", "--maxmemory", "256mb", "--maxmemory-policy", "volatile-lru", "--appendonly", "no"]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
       retries: 10
 
   kafka:
@@ -37,6 +54,7 @@ services:
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: 0
+      KAFKA_NUM_PARTITIONS: 6
 
   gateway-api:
     profiles: ["apps"]
@@ -50,6 +68,7 @@ services:
     environment:
       SERVER_PORT: 8080
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       USER_API_URL: http://user-api:8081
       INVENTORY_API_URL: http://inventory-api:8082
       SALES_API_URL: http://sales-api:8083
@@ -60,6 +79,10 @@ services:
       PURCHASING_API_URL: http://purchasing-api:8088
       REPORTING_API_URL: http://reporting-api:8089
       NOTIFICATION_API_URL: http://notification-api:8090
+    depends_on:
+      redis:
+        condition: service_healthy
+
 
   user-api:
     profiles: ["apps"]
@@ -73,11 +96,17 @@ services:
     environment:
       SERVER_PORT: 8081
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_user
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-Admin#12345}
+      PLATFORM_PASSWORD: ${PLATFORM_PASSWORD:-Platform#12345}
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
 
@@ -93,11 +122,16 @@ services:
     environment:
       SERVER_PORT: 8082
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_inventory
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
       KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       kafka:
@@ -115,13 +149,18 @@ services:
     environment:
       SERVER_PORT: 8083
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_sales
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
       KAFKA_BOOTSTRAP: kafka:9092
       CATALOG_API_URL: http://catalog-api:8085
       PAYMENT_API_URL: http://payment-api:8086
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       kafka:
@@ -139,10 +178,15 @@ services:
     environment:
       SERVER_PORT: 8084
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_administration
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
 
@@ -158,10 +202,15 @@ services:
     environment:
       SERVER_PORT: 8085
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_catalog
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
 
@@ -177,10 +226,15 @@ services:
     environment:
       SERVER_PORT: 8086
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_payment
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
 
@@ -196,11 +250,16 @@ services:
     environment:
       SERVER_PORT: 8087
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_customer
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
       KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       kafka:
@@ -218,11 +277,16 @@ services:
     environment:
       SERVER_PORT: 8088
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_purchasing
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
       KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       kafka:
@@ -240,11 +304,16 @@ services:
     environment:
       SERVER_PORT: 8089
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_reporting
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
       KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       kafka:
@@ -262,11 +331,16 @@ services:
     environment:
       SERVER_PORT: 8090
       JWT_SECRET: ${JWT_SECRET:-change-me-change-me-change-me-change-me}
+      REDIS_HOST: redis
       DB_URL: jdbc:postgresql://postgres:5432/pos_notification
-      DB_USER: ${DB_USER:-pos}
-      DB_PASSWORD: ${DB_PASSWORD:-pos}
+      DB_USER: ${DB_USER:-pos_app}
+      DB_PASSWORD: ${DB_PASSWORD:-pos_app}
+      FLYWAY_USER: ${DB_OWNER_USER:-pos}
+      FLYWAY_PASSWORD: ${DB_OWNER_PASSWORD:-pos}
       KAFKA_BOOTSTRAP: kafka:9092
     depends_on:
+      redis:
+        condition: service_healthy
       postgres:
         condition: service_healthy
       kafka:

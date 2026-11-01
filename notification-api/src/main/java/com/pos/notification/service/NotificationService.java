@@ -2,33 +2,44 @@ package com.pos.notification.service;
 
 import java.util.List;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
+
+import jakarta.annotation.PostConstruct;
 
 import com.pos.common.error.ApiException;
 import com.pos.common.security.CurrentUser;
-import com.pos.common.web.PageResult;
-import com.pos.common.web.Paging;
+import com.pos.common.tenant.TenantContext;
+import com.pos.common.dto.PageResult;
+import com.pos.common.dto.Paging;
 import com.pos.notification.domain.Notification;
 import com.pos.notification.mapper.NotificationMapper;
 import com.pos.notification.sender.NotificationSender;
 
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class NotificationService {
 
-    private static final Logger log = LoggerFactory.getLogger(NotificationService.class);
     private static final int MAX_ATTEMPTS = 5;
     private static final int BATCH = 50;
 
     private final NotificationMapper notifications;
     private final NotificationSender sender;
+    private final PlatformTransactionManager txManager;
+    private TransactionTemplate tx;
+
+    @PostConstruct
+    void initTransactionTemplate() {
+        this.tx = new TransactionTemplate(txManager);
+    }
 
     @Value("${notification.ops-email:ops@example.com}")
     private String opsEmail;
@@ -49,8 +60,16 @@ public class NotificationService {
 
     /** Sends pending notifications. A failure keeps the row for retry, up to {@value #MAX_ATTEMPTS} attempts. */
     @Scheduled(fixedDelayString = "${notification.dispatch-interval-ms:5000}")
-    @Transactional
     public void dispatchPending() {
+        // Sends every company's queue, so it runs in system mode (the notifications policy allows it) and the
+        // transaction is opened inside it: a connection takes its tenant settings when the transaction starts.
+        TenantContext.callAsSystem(() -> {
+            tx.executeWithoutResult(status -> dispatchBatch());
+            return null;
+        });
+    }
+
+    private void dispatchBatch() {
         List<Notification> batch = notifications.claimPending(BATCH);
         for (Notification notification : batch) {
             try {

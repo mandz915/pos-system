@@ -18,13 +18,13 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pos.administration.domain.Store;
 import com.pos.administration.domain.Terminal;
 import com.pos.administration.service.AdminService;
-import com.pos.administration.controller.AdminDtos.SettingRequest;
-import com.pos.administration.controller.AdminDtos.StoreRequest;
-import com.pos.administration.controller.AdminDtos.TerminalRequest;
+import com.pos.administration.dto.AdminDtos.SettingRequest;
+import com.pos.administration.dto.AdminDtos.StoreRequest;
+import com.pos.administration.dto.AdminDtos.TerminalRequest;
 import com.pos.common.security.CurrentUser;
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
-import com.pos.common.web.ActiveRequest;
+import com.pos.common.dto.ActiveRequest;
 
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

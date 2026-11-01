@@ -13,8 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
@@ -22,12 +20,15 @@ import org.springframework.stereotype.Service;
 
 import com.pos.common.error.ApiException;
 import com.pos.common.model.PaymentMethod;
+import com.pos.common.pricing.PromotionEngine;
+import com.pos.common.pricing.PromotionEngine.LineDiscount;
+import com.pos.common.pricing.PromotionRule;
 import com.pos.common.security.AuthenticatedUser;
 import com.pos.common.security.CurrentUser;
 import com.pos.common.security.Roles;
 import com.pos.common.util.Money;
-import com.pos.common.web.PageResult;
-import com.pos.common.web.Paging;
+import com.pos.common.dto.PageResult;
+import com.pos.common.dto.Paging;
 import com.pos.sales.client.CatalogClient;
 import com.pos.sales.client.CatalogClient.ProductInfo;
 import com.pos.sales.client.PaymentClient;
@@ -46,13 +47,15 @@ import com.pos.sales.service.PricingCalculator.LineAmounts;
 import com.pos.sales.service.SaleTxService.RefundItem;
 import com.pos.sales.service.TenderPlanner.Plan;
 import com.pos.sales.service.TenderPlanner.Tender;
-import com.pos.sales.web.SalesDtos.CheckoutRequest;
-import com.pos.sales.web.SalesDtos.CreateSaleRequest;
-import com.pos.sales.web.SalesDtos.LineRequest;
-import com.pos.sales.web.SalesDtos.RefundLine;
-import com.pos.sales.web.SalesDtos.RefundRequest;
-import com.pos.sales.web.SalesDtos.SaleView;
+import com.pos.sales.dto.SalesDtos.CheckoutRequest;
+import com.pos.sales.dto.SalesDtos.CreateSaleRequest;
+import com.pos.sales.dto.SalesDtos.LineRequest;
+import com.pos.sales.dto.SalesDtos.LineTax;
+import com.pos.sales.dto.SalesDtos.RefundLine;
+import com.pos.sales.dto.SalesDtos.RefundRequest;
+import com.pos.sales.dto.SalesDtos.SaleView;
 
+import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 
 /**
@@ -61,9 +64,9 @@ import lombok.RequiredArgsConstructor;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class SaleService {
 
-    private static final Logger log = LoggerFactory.getLogger(SaleService.class);
 
     private final SaleMapper sales;
     private final SaleLineMapper lineMapper;
@@ -92,7 +95,7 @@ public class SaleService {
         if (!shift.getStoreId().equals(request.storeId())) {
             throw ApiException.badRequest("Terminal " + request.terminalId() + " does not belong to store " + request.storeId());
         }
-        List<SaleLine> lines = priceLines(request.lines());
+        List<SaleLine> lines = priceLines(request.lines(), request.storeId(), request.couponCodes());
         try {
             Long id = tx.createDraft(request, shift, CurrentUser.get().userId(), lines);
             return view(id);
@@ -106,13 +109,13 @@ public class SaleService {
         }
     }
 
-    public SaleView replaceLines(Long saleId, List<LineRequest> requests) {
+    public SaleView replaceLines(Long saleId, List<LineRequest> requests, List<String> couponCodes) {
         Sale sale = require(saleId);
         assertCanModify(sale);
         if (sale.getStatus() != SaleStatus.OPEN) {
             throw ApiException.conflict("Only an open sale can be edited (status " + sale.getStatus() + ")");
         }
-        tx.replaceLines(saleId, priceLines(requests));
+        tx.replaceLines(saleId, priceLines(requests, sale.getStoreId(), couponCodes));
         return view(saleId);
     }
 
@@ -290,8 +293,18 @@ public class SaleService {
         }
     }
 
-    /** Looks every product up in the catalog and snapshots price, discount and tax onto the lines. */
-    private List<SaleLine> priceLines(List<LineRequest> requests) {
+    /** Looks every product up in the catalog and snapshots price, discount and tax onto the lines.
+     * Prices every line from the catalog: unit price, tax (the product's, or a supervisor's per-line override) and
+     * the best applicable promotion for the quantity bought.
+     */
+    private List<SaleLine> priceLines(List<LineRequest> requests, Long storeId, List<String> couponCodes) {
+        Set<String> coupons = couponCodes == null ? Set.of() : new HashSet<>(couponCodes);
+        List<PromotionRule> rules = catalog.livePromotions();
+        requireValidCoupons(coupons, rules, storeId);
+        if (requests.stream().anyMatch(r -> r.tax() != null)) {
+            CurrentUser.requireAnyRole(Roles.ADMIN, Roles.MANAGER, Roles.SUPERVISOR);
+        }
+        Instant now = Instant.now();
         Map<Long, ProductInfo> cache = new HashMap<>();
         List<SaleLine> lines = new ArrayList<>();
         for (LineRequest request : requests) {
@@ -299,10 +312,18 @@ public class SaleService {
             if (!product.active()) {
                 throw ApiException.conflict("Product '" + product.name() + "' is not for sale");
             }
-            BigDecimal taxRate = product.taxRate() == null ? BigDecimal.ZERO : product.taxRate();
-            BigDecimal discount = product.discountPerUnit() == null ? BigDecimal.ZERO : product.discountPerUnit();
-            LineAmounts amounts = PricingCalculator.line(request.quantity(), product.price(), discount, taxRate,
-                    product.taxInclusive());
+            LineTax override = request.tax();
+            BigDecimal taxRate = override != null ? override.rate()
+                    : product.taxRate() == null ? BigDecimal.ZERO : product.taxRate();
+            boolean inclusive = override != null && override.inclusive() != null ? override.inclusive()
+                    : product.taxInclusive();
+            String taxCode = override != null ? override.code()
+                    : product.tax() == null ? null : product.tax().code();
+
+            LineDiscount promo = PromotionEngine.lineDiscount(product.price(), request.quantity(), product.id(),
+                    product.categoryId(), storeId, rules, coupons, now);
+            LineAmounts amounts = PricingCalculator.lineWithDiscount(request.quantity(), product.price(), promo.total(),
+                    taxRate, inclusive);
 
             SaleLine line = new SaleLine();
             line.setProductId(product.id());
@@ -310,14 +331,29 @@ public class SaleService {
             line.setName(product.name());
             line.setQuantity(request.quantity());
             line.setUnitPrice(product.price());
-            line.setDiscountPerUnit(discount);
+            line.setDiscountPerUnit(amounts.discountTotal().divide(request.quantity(), 2, RoundingMode.HALF_UP));
             line.setDiscountTotal(amounts.discountTotal());
+            line.setPromotionCode(amounts.discountTotal().signum() > 0 ? promo.promotionCode() : null);
+            line.setTaxCode(taxCode);
+            line.setTaxOverridden(override != null);
             line.setTaxRate(taxRate);
-            line.setTaxInclusive(product.taxInclusive());
+            line.setTaxInclusive(inclusive);
             line.setTaxAmount(amounts.taxAmount());
             line.setLineTotal(amounts.lineTotal());
             lines.add(line);
         }
         return lines;
+    }
+
+    /** A coupon the cashier typed must exist, be live and be valid in this store; otherwise tell them right away. */
+    private static void requireValidCoupons(Set<String> coupons, List<PromotionRule> rules, Long storeId) {
+        for (String coupon : coupons) {
+            boolean known = rules.stream().anyMatch(r -> r.couponCode() != null
+                    && r.couponCode().trim().equalsIgnoreCase(coupon.trim())
+                    && (r.storeId() == null || r.storeId().equals(storeId)));
+            if (!known) {
+                throw ApiException.badRequest("Coupon '" + coupon.trim() + "' is not valid");
+            }
+        }
     }
 }

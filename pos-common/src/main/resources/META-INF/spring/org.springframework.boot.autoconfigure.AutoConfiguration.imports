@@ -1,3 +1,6 @@
 com.pos.common.config.PosSecurityAutoConfiguration
 com.pos.common.config.PosWebMvcAutoConfiguration
 com.pos.common.config.PosOutboxAutoConfiguration
+com.pos.common.config.PosCacheAutoConfiguration
+com.pos.common.config.PosKafkaTopicsAutoConfiguration
+com.pos.common.config.PosTenancyAutoConfiguration

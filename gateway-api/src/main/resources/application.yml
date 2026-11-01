@@ -4,6 +4,12 @@ server:
 spring:
   application:
     name: gateway-api
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 200ms
+      connect-timeout: 500ms
 
 pos:
   security:
@@ -16,7 +22,8 @@ pos:
     public-paths: /api/auth/login,/api/auth/pin-login
     rate-limit:
       enabled: true
-      requests-per-minute: ${RATE_LIMIT_PER_MINUTE:600}
+      requests-per-minute: ${RATE_LIMIT_PER_MINUTE:1200}
+      anonymous-per-minute: ${RATE_LIMIT_ANONYMOUS_PER_MINUTE:60}
     services:
       user: ${USER_API_URL:http://localhost:8081}
       inventory: ${INVENTORY_API_URL:http://localhost:8082}

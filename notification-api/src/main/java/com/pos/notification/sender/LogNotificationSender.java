@@ -1,16 +1,16 @@
 package com.pos.notification.sender;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
 import com.pos.notification.domain.Notification;
 
+import lombok.extern.slf4j.Slf4j;
+
 /** Development sender: writes the message to the log instead of sending it. */
 @Component
+@Slf4j
 public class LogNotificationSender implements NotificationSender {
 
-    private static final Logger log = LoggerFactory.getLogger(LogNotificationSender.class);
 
     @Override
     public void send(Notification notification) {

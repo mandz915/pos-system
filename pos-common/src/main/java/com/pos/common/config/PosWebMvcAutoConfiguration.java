@@ -3,6 +3,8 @@ package com.pos.common.config;
 import java.util.Arrays;
 import java.util.List;
 
+import org.jspecify.annotations.NonNull;
+import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.context.annotation.Bean;
@@ -11,8 +13,9 @@ import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
 
 import com.pos.common.security.JwtService;
-import com.pos.common.web.AuthInterceptor;
-import com.pos.common.web.GlobalExceptionHandler;
+import com.pos.common.security.TokenRevocations;
+import com.pos.common.controller.AuthInterceptor;
+import com.pos.common.controller.GlobalExceptionHandler;
 
 /**
  * Servlet-only wiring: JWT authentication for {@code /api/**} and the shared error handler.
@@ -23,8 +26,8 @@ import com.pos.common.web.GlobalExceptionHandler;
 public class PosWebMvcAutoConfiguration {
 
     @Bean
-    public AuthInterceptor posAuthInterceptor(JwtService jwtService) {
-        return new AuthInterceptor(jwtService);
+    public AuthInterceptor posAuthInterceptor(JwtService jwtService, ObjectProvider<TokenRevocations> revocations) {
+        return new AuthInterceptor(jwtService, revocations.getIfAvailable(() -> TokenRevocations.NONE));
     }
 
     @Bean
@@ -40,7 +43,7 @@ public class PosWebMvcAutoConfiguration {
                 .toList();
         return new WebMvcConfigurer() {
             @Override
-            public void addInterceptors(InterceptorRegistry registry) {
+            public void addInterceptors(@NonNull InterceptorRegistry registry) {
                 registry.addInterceptor(interceptor)
                         .addPathPatterns("/api/**")
                         .excludePathPatterns(publicPaths);

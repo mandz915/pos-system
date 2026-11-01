@@ -1,10 +1,14 @@
 package com.pos.catalog.service;
 
 import java.math.BigDecimal;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.function.Supplier;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.pos.catalog.domain.Category;
@@ -15,16 +19,22 @@ import com.pos.catalog.mapper.CategoryMapper;
 import com.pos.catalog.mapper.ProductMapper;
 import com.pos.catalog.mapper.PromotionMapper;
 import com.pos.catalog.mapper.TaxRateMapper;
-import com.pos.catalog.controller.CatalogDtos.CategoryRequest;
-import com.pos.catalog.controller.CatalogDtos.ProductRequest;
-import com.pos.catalog.controller.CatalogDtos.ProductView;
-import com.pos.catalog.controller.CatalogDtos.PromotionRequest;
-import com.pos.catalog.controller.CatalogDtos.TaxRateRequest;
+import com.pos.catalog.dto.CatalogDtos.CategoryRequest;
+import com.pos.catalog.dto.CatalogDtos.ProductRequest;
+import com.pos.catalog.dto.CatalogDtos.ProductView;
+import com.pos.catalog.dto.CatalogDtos.PromotionRequest;
+import com.pos.catalog.dto.CatalogDtos.TaxRateRequest;
+import com.pos.catalog.dto.CatalogDtos.TaxInfo;
+import com.pos.common.cache.CacheNames;
+import com.pos.common.cache.JsonCache;
 import com.pos.common.error.ApiException;
+import com.pos.common.pricing.PromotionEngine;
+import com.pos.common.pricing.PromotionRule;
 import com.pos.common.security.CurrentUser;
 import com.pos.common.security.Roles;
-import com.pos.common.web.PageResult;
-import com.pos.common.web.Paging;
+import com.pos.common.util.AfterCommit;
+import com.pos.common.dto.PageResult;
+import com.pos.common.dto.Paging;
 
 import lombok.RequiredArgsConstructor;
 
@@ -37,13 +47,17 @@ public class CatalogService {
     private final CategoryMapper categories;
     private final TaxRateMapper taxRates;
     private final PromotionMapper promotions;
+    private final JsonCache cache;
+
+    @Value("${pos.cache.catalog-ttl:30s}")
+    private Duration cacheTtl = Duration.ofSeconds(30);
 
     // ------------------------------------------------------------------ products
     @Transactional(readOnly = true)
     public PageResult<ProductView> searchProducts(String q, Long categoryId, Boolean active, Integer page, Integer size) {
         Paging paging = Paging.of(page, size);
         String pattern = q == null || q.isBlank() ? null : "%" + q.trim() + "%";
-        List<Promotion> live = promotions.findLive();
+        List<PromotionRule> live = liveRules();
         boolean showCost = canSeeCost();
         List<ProductView> items = products.search(pattern, categoryId, active, paging.size(), paging.offset()).stream()
                 .map(p -> view(p, live, showCost))
@@ -51,38 +65,71 @@ public class CatalogService {
         return PageResult.of(items, paging, products.count(pattern, categoryId, active));
     }
 
-    @Transactional(readOnly = true)
+    /**
+     * Product lookups are the hottest reads of a POS (every scan), so they are served from Redis when possible.
+     * The cache holds the view WITHOUT cost; managers who may see the cost always read the database.
+     * No transaction is opened here, so a cache hit does not even take a database connection.
+     */
+    @Transactional(propagation = Propagation.SUPPORTS)
     public ProductView getProduct(Long id) {
+        return cached(CacheNames.productById(id), () -> loadProduct(id));
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public ProductView getByBarcode(String barcode) {
+        return cached(CacheNames.productByBarcode(barcode), () -> {
+            Product product = products.findByBarcode(barcode);
+            if (product == null) {
+                throw ApiException.notFound("Product with barcode", barcode);
+            }
+            return view(product, liveRules(), canSeeCost());
+        });
+    }
+
+    @Transactional(propagation = Propagation.SUPPORTS)
+    public ProductView getBySku(String sku) {
+        return cached(CacheNames.productBySku(sku), () -> {
+            Product product = products.findBySku(sku);
+            if (product == null) {
+                throw ApiException.notFound("Product with SKU", sku);
+            }
+            return view(product, liveRules(), canSeeCost());
+        });
+    }
+
+    private ProductView cached(String key, Supplier<ProductView> loader) {
+        boolean showCost = canSeeCost();
+        if (!showCost) {
+            ProductView hit = cache.get(CacheNames.CATALOG, key, ProductView.class).orElse(null);
+            if (hit != null) {
+                return hit;
+            }
+        }
+        ProductView loaded = loader.get();
+        cache.put(CacheNames.CATALOG, key, loaded.withoutCost(), cacheTtl);
+        return loaded;
+    }
+
+    /** Reads the database, never the cache. Writes use it so they cannot return stale data they just changed. */
+    private ProductView loadProduct(Long id) {
         Product product = products.findById(id);
         if (product == null) {
             throw ApiException.notFound("Product", id);
         }
-        return view(product, promotions.findLive(), canSeeCost());
+        return view(product, liveRules(), canSeeCost());
     }
 
-    @Transactional(readOnly = true)
-    public ProductView getByBarcode(String barcode) {
-        Product product = products.findByBarcode(barcode);
-        if (product == null) {
-            throw ApiException.notFound("Product with barcode", barcode);
-        }
-        return view(product, promotions.findLive(), canSeeCost());
-    }
-
-    @Transactional(readOnly = true)
-    public ProductView getBySku(String sku) {
-        Product product = products.findBySku(sku);
-        if (product == null) {
-            throw ApiException.notFound("Product with SKU", sku);
-        }
-        return view(product, promotions.findLive(), canSeeCost());
+    /** Drops cached catalog data once the current transaction has committed. */
+    private void evictCatalogCache() {
+        AfterCommit.run(() -> cache.evictAll(CacheNames.CATALOG));
     }
 
     public ProductView createProduct(ProductRequest request) {
         Product product = new Product();
         applyProduct(product, request);
         products.insert(product);
-        return getProduct(product.getId());
+        evictCatalogCache();
+        return loadProduct(product.getId());
     }
 
     public ProductView updateProduct(Long id, ProductRequest request) {
@@ -92,13 +139,15 @@ public class CatalogService {
         }
         applyProduct(product, request);
         products.update(product);
-        return getProduct(id);
+        evictCatalogCache();
+        return loadProduct(id);
     }
 
     public ProductView setProductActive(Long id, boolean active) {
-        getProduct(id);
+        loadProduct(id);
         products.setActive(id, active);
-        return getProduct(id);
+        evictCatalogCache();
+        return loadProduct(id);
     }
 
     private void applyProduct(Product product, ProductRequest request) {
@@ -121,14 +170,19 @@ public class CatalogService {
         product.setActive(request.active() == null || request.active());
     }
 
-    private ProductView view(Product p, List<Promotion> live, boolean showCost) {
-        BigDecimal discount = PromotionCalculator.discountPerUnit(p.getPrice(), p.getId(), p.getCategoryId(), live, Instant.now());
+    private List<PromotionRule> liveRules() {
+        return promotions.findLive().stream().map(Promotion::toRule).toList();
+    }
+
+    private ProductView view(Product p, List<PromotionRule> live, boolean showCost) {
+        BigDecimal discount = PromotionEngine.discountPerUnit(p.getPrice(), p.getId(), p.getCategoryId(), live, Instant.now());
         BigDecimal rate = p.getTaxRate() == null ? BigDecimal.ZERO : p.getTaxRate();
         boolean inclusive = p.getTaxInclusive() == null || p.getTaxInclusive();
         return new ProductView(p.getId(), p.getSku(), p.getBarcode(), p.getName(), p.getDescription(),
                 p.getCategoryId(), p.getTaxRateId(), rate, inclusive, p.getUom(), p.getPrice(),
                 showCost ? p.getCost() : null, discount, p.getPrice().subtract(discount),
-                p.getImageUrl(), p.isActive());
+                p.getImageUrl(), p.isActive(),
+                p.getTaxRateId() == null ? null : new TaxInfo(p.getTaxRateId(), p.getTaxCode(), rate, inclusive));
     }
 
     private boolean canSeeCost() {
@@ -160,6 +214,7 @@ public class CatalogService {
         category.setName(request.name().trim());
         category.setParentId(request.parentId());
         categories.update(category);
+        evictCatalogCache();
         return categories.findById(id);
     }
 
@@ -168,6 +223,7 @@ public class CatalogService {
             throw ApiException.notFound("Category", id);
         }
         categories.setActive(id, active);
+        evictCatalogCache();
         return categories.findById(id);
     }
 
@@ -191,6 +247,7 @@ public class CatalogService {
         }
         applyTaxRate(taxRate, request);
         taxRates.update(taxRate);
+        evictCatalogCache();
         return taxRates.findById(id);
     }
 
@@ -212,6 +269,7 @@ public class CatalogService {
         Promotion promotion = new Promotion();
         applyPromotion(promotion, request);
         promotions.insert(promotion);
+        evictCatalogCache();
         return promotions.findById(promotion.getId());
     }
 
@@ -222,6 +280,7 @@ public class CatalogService {
         }
         applyPromotion(promotion, request);
         promotions.update(promotion);
+        evictCatalogCache();
         return promotions.findById(id);
     }
 
@@ -229,9 +288,22 @@ public class CatalogService {
         if (request.productId() != null && request.categoryId() != null) {
             throw ApiException.badRequest("A promotion targets either a product or a category, not both");
         }
-        if (request.type() == com.pos.catalog.domain.PromotionType.PERCENT
-                && request.value().compareTo(new BigDecimal("100")) > 0) {
-            throw ApiException.badRequest("A percentage promotion cannot exceed 100");
+        switch (request.type()) {
+            case PERCENT -> {
+                requireValue(request);
+                if (request.value().compareTo(new BigDecimal("100")) > 0) {
+                    throw ApiException.badRequest("A percentage promotion cannot exceed 100");
+                }
+            }
+            case FIXED -> requireValue(request);
+            case BUY_X_GET_Y -> {
+                if (request.buyQty() == null || request.getQty() == null) {
+                    throw ApiException.badRequest("A buy-X-get-Y promotion needs buyQty and getQty");
+                }
+                if (request.productId() == null && request.categoryId() == null) {
+                    throw ApiException.badRequest("A buy-X-get-Y promotion must target a product or a category");
+                }
+            }
         }
         if (request.startsAt() != null && request.endsAt() != null && !request.endsAt().isAfter(request.startsAt())) {
             throw ApiException.badRequest("endsAt must be after startsAt");
@@ -239,11 +311,24 @@ public class CatalogService {
         promotion.setCode(request.code().trim().toUpperCase());
         promotion.setName(request.name().trim());
         promotion.setType(request.type());
-        promotion.setValue(request.value());
+        boolean bogo = request.type() == com.pos.catalog.domain.PromotionType.BUY_X_GET_Y;
+        promotion.setValue(bogo ? null : request.value());
+        promotion.setBuyQty(bogo ? request.buyQty() : null);
+        promotion.setGetQty(bogo ? request.getQty() : null);
+        promotion.setMinQty(request.minQty());
+        promotion.setStoreId(request.storeId());
+        promotion.setCouponCode(request.couponCode() == null || request.couponCode().isBlank()
+                ? null : request.couponCode().trim().toUpperCase());
         promotion.setProductId(request.productId());
         promotion.setCategoryId(request.categoryId());
         promotion.setStartsAt(request.startsAt());
         promotion.setEndsAt(request.endsAt());
         promotion.setActive(request.active() == null || request.active());
+    }
+
+    private static void requireValue(PromotionRequest request) {
+        if (request.value() == null) {
+            throw ApiException.badRequest("A " + request.type() + " promotion needs a value");
+        }
     }
 }

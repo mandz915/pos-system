@@ -11,7 +11,7 @@ import com.pos.sales.domain.Sale;
 import com.pos.sales.domain.SaleLine;
 import com.pos.sales.domain.SalePayment;
 import com.pos.sales.domain.SaleStatus;
-import com.pos.sales.web.SalesDtos.SaleView;
+import com.pos.sales.dto.SalesDtos.SaleView;
 
 import lombok.RequiredArgsConstructor;
 

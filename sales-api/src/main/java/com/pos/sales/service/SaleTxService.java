@@ -31,7 +31,7 @@ import com.pos.sales.mapper.SalePaymentMapper;
 import com.pos.sales.service.PricingCalculator.Totals;
 import com.pos.sales.service.TenderPlanner.Plan;
 import com.pos.sales.service.TenderPlanner.Tender;
-import com.pos.sales.web.SalesDtos.CreateSaleRequest;
+import com.pos.sales.dto.SalesDtos.CreateSaleRequest;
 
 import lombok.RequiredArgsConstructor;
 
@@ -119,10 +119,7 @@ public class SaleTxService {
         if (sale.getTotal().compareTo(plan.total()) != 0) {
             throw ApiException.conflict("The sale changed while it was being paid; please retry");
         }
-        long sequence = sales.nextReceiptNo(sale.getStoreId());
-        String receiptNo = String.format("%03d-%08d", sale.getStoreId(), sequence);
         Instant now = Instant.now();
-        sales.complete(saleId, receiptNo, plan.paidTotal(), plan.change(), now);
 
         for (int i = 0; i < plan.tenders().size(); i++) {
             Tender tender = plan.tenders().get(i);
@@ -142,14 +139,21 @@ public class SaleTxService {
                 .map(l -> new SaleCompletedEvent.Line(l.getProductId(), l.getSku(), l.getName(), l.getQuantity(),
                         l.getUnitPrice(), l.getTaxAmount(), l.getLineTotal()))
                 .toList();
+        // Taken last: the per-store sequence row stays locked until commit, so everything slow goes before it.
+        long sequence = sales.nextReceiptNo(sale.getStoreId());
+        String receiptNo = String.format("%03d-%08d", sale.getStoreId(), sequence);
+        sales.complete(saleId, receiptNo, plan.paidTotal(), plan.change(), now);
+
         outbox.enqueue(Topics.SALE_COMPLETED, String.valueOf(saleId), new SaleCompletedEvent(
                 UUID.randomUUID().toString(), saleId, receiptNo, sale.getStoreId(), sale.getTerminalId(),
                 sale.getCashierId(), sale.getCustomerId(), sale.getSubtotal(), sale.getDiscountTotal(),
                 sale.getTaxTotal(), sale.getTotal(), now, eventLines));
     }
 
-    /** Records returned goods; flips the sale to REFUNDED once every unit has come back. */
-    public Long recordRefund(Long saleId, Long shiftId, List<RefundItem> items, BigDecimal refundTotal,
+    /**
+     * Records returned goods; flips the sale to REFUNDED once every unit has come back.
+     */
+    public void recordRefund(Long saleId, Long shiftId, List<RefundItem> items, BigDecimal refundTotal,
                              PaymentMethod method, String reason, boolean restock, Long userId) {
         Sale sale = requireLocked(saleId);
         if (sale.getStatus() != SaleStatus.COMPLETED) {
@@ -200,7 +204,6 @@ public class SaleTxService {
         outbox.enqueue(Topics.SALE_REFUNDED, String.valueOf(saleId), new SaleRefundedEvent(
                 UUID.randomUUID().toString(), saleId, saleReturn.getId(), sale.getReceiptNo(), sale.getStoreId(),
                 sale.getCustomerId(), refundTotal, restock, Instant.now(), eventLines));
-        return saleReturn.getId();
     }
 
     private Sale requireLocked(Long saleId) {

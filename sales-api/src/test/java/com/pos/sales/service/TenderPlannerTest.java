@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 import com.pos.common.error.ApiException;
 import com.pos.common.model.PaymentMethod;
 import com.pos.sales.service.TenderPlanner.Plan;
-import com.pos.sales.web.SalesDtos.PaymentLine;
+import com.pos.sales.dto.SalesDtos.PaymentLine;
 
 class TenderPlannerTest {
 
@@ -36,8 +36,8 @@ class TenderPlannerTest {
     void cashOverpaymentGivesChange() {
         Plan plan = TenderPlanner.plan(bd("180.00"), List.of(pay(PaymentMethod.CASH, "200.00")));
 
-        assertThat(plan.tenders().get(0).applied()).isEqualByComparingTo("180.00");
-        assertThat(plan.tenders().get(0).tendered()).isEqualByComparingTo("200.00");
+        assertThat(plan.tenders().getFirst().applied()).isEqualByComparingTo("180.00");
+        assertThat(plan.tenders().getFirst().tendered()).isEqualByComparingTo("200.00");
         assertThat(plan.change()).isEqualByComparingTo("20.00");
         assertThat(plan.paidTotal()).isEqualByComparingTo("200.00");
     }
