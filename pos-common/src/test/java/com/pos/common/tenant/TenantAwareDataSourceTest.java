@@ -17,14 +17,13 @@ import org.junit.jupiter.api.Test;
 
 class TenantAwareDataSourceTest {
 
-    private DataSource target;
     private Connection connection;
     private PreparedStatement statement;
     private TenantAwareDataSource dataSource;
 
     @BeforeEach
     void setUp() throws SQLException {
-        target = mock(DataSource.class);
+        DataSource target = mock(DataSource.class);
         connection = mock(Connection.class);
         statement = mock(PreparedStatement.class);
         when(target.getConnection()).thenReturn(connection);

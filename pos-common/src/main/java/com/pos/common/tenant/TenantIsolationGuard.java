@@ -1,5 +1,6 @@
 package com.pos.common.tenant;
 
+import org.jspecify.annotations.NonNull;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.core.Ordered;
@@ -20,7 +21,7 @@ public class TenantIsolationGuard implements ApplicationRunner, Ordered {
     private final JdbcTemplate jdbc;
 
     @Override
-    public void run(ApplicationArguments args) {
+    public void run(@NonNull ApplicationArguments args) {
         Boolean bypass = jdbc.queryForObject(
                 "SELECT rolsuper OR rolbypassrls FROM pg_roles WHERE rolname = current_user", Boolean.class);
         if (Boolean.TRUE.equals(bypass)) {
