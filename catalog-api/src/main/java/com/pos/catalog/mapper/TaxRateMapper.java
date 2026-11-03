@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.catalog.domain.TaxRate;
+import com.pos.catalog.dto.TaxRate;
 
 @Mapper
 public interface TaxRateMapper {

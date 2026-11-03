@@ -2,7 +2,6 @@ package com.pos.gateway.filter;
 
 import java.time.Clock;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -15,11 +14,6 @@ import com.pos.gateway.config.GatewayProperties;
 
 import reactor.core.publisher.Mono;
 
-/**
- * Throttles requests after authentication: signed-in traffic is limited per USER (a whole store of tills sharing one
- * public IP must not be throttled as one client), anonymous traffic (login) per client address, with a much lower
- * limit so password guessing stays expensive. Counters live in Redis (cluster-wide) with an in-memory fallback.
- */
 @Component
 public class RateLimitFilter implements GlobalFilter, Ordered {
 
@@ -43,7 +37,7 @@ public class RateLimitFilter implements GlobalFilter, Ordered {
     }
 
     @Override
-    public Mono<Void> filter(@NonNull ServerWebExchange exchange, @NonNull GatewayFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         if (!enabled) {
             return chain.filter(exchange);
         }

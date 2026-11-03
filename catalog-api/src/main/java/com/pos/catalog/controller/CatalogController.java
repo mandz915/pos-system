@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pos.catalog.domain.Category;
-import com.pos.catalog.domain.Promotion;
-import com.pos.catalog.domain.TaxRate;
+import com.pos.catalog.dto.Category;
+import com.pos.catalog.dto.Promotion;
+import com.pos.catalog.dto.TaxRate;
 import com.pos.catalog.service.CatalogService;
 import com.pos.catalog.dto.CatalogDtos.CategoryRequest;
 import com.pos.catalog.dto.CatalogDtos.ProductRequest;
@@ -31,7 +31,6 @@ import com.pos.common.dto.PageResult;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-/** Reads are open to every signed-in user (cashiers need them); writes need ADMIN or MANAGER. */
 @RestController
 @RequestMapping("/api/catalog")
 @RequiredArgsConstructor
@@ -39,7 +38,6 @@ public class CatalogController {
 
     private final CatalogService catalog;
 
-    // ---- products
     @GetMapping("/products")
     public PageResult<ProductView> products(@RequestParam(required = false) String q,
                                             @RequestParam(required = false) Long categoryId,
@@ -83,7 +81,6 @@ public class CatalogController {
         return catalog.setProductActive(id, request.active());
     }
 
-    // ---- categories
     @GetMapping("/categories")
     public List<Category> categories() {
         return catalog.listCategories();
@@ -108,7 +105,6 @@ public class CatalogController {
         return catalog.setCategoryActive(id, request.active());
     }
 
-    // ---- tax rates
     @GetMapping("/tax-rates")
     public List<TaxRate> taxRates() {
         return catalog.listTaxRates();
@@ -127,7 +123,6 @@ public class CatalogController {
         return catalog.updateTaxRate(id, request);
     }
 
-    // ---- promotions
     @GetMapping("/promotions")
     public List<Promotion> promotions(@RequestParam(defaultValue = "false") boolean liveOnly) {
         return catalog.listPromotions(liveOnly);

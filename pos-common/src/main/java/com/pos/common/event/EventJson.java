@@ -3,7 +3,6 @@ package com.pos.common.event;
 import tools.jackson.databind.DeserializationFeature;
 import tools.jackson.databind.json.JsonMapper;
 
-/** JSON (de)serialisation of Kafka event payloads. Unknown fields are ignored so events can evolve. */
 public final class EventJson {
 
     private static final JsonMapper MAPPER = JsonMapper.builder()

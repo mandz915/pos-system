@@ -9,16 +9,11 @@ import com.pos.common.model.PaymentMethod;
 import com.pos.common.util.Money;
 import com.pos.sales.dto.SalesDtos.PaymentLine;
 
-/**
- * Turns what the customer offers into what is credited to the sale. Non-cash tenders must be exact (they can never
- * exceed the balance); cash is applied last and any excess becomes change.
- */
 public final class TenderPlanner {
 
     private TenderPlanner() {
     }
 
-    /** @param applied credited to the sale; @param tendered handed over by the customer */
     public record Tender(PaymentMethod method, BigDecimal applied, BigDecimal tendered, String reference) {
     }
 

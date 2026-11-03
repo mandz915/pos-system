@@ -6,15 +6,15 @@
         INSERT INTO stock_counts (store_id, created_by) VALUES (#{storeId}, #{createdBy})
     </insert>
 
-    <select id="findById" resultType="com.pos.inventory.domain.StockCount">
+    <select id="findById" resultType="com.pos.inventory.dto.StockCount">
         SELECT * FROM stock_counts WHERE id = #{id}
     </select>
 
-    <select id="lock" resultType="com.pos.inventory.domain.StockCount">
+    <select id="lock" resultType="com.pos.inventory.dto.StockCount">
         SELECT * FROM stock_counts WHERE id = #{id} FOR UPDATE
     </select>
 
-    <select id="findAll" resultType="com.pos.inventory.domain.StockCount">
+    <select id="findAll" resultType="com.pos.inventory.dto.StockCount">
         SELECT * FROM stock_counts
         <where>
           <if test="storeId != null">store_id = #{storeId}</if>
@@ -35,7 +35,7 @@
         UPDATE stock_count_lines SET system_qty = #{systemQty} WHERE id = #{id}
     </update>
 
-    <select id="lines" resultType="com.pos.inventory.domain.StockCountLine">
+    <select id="lines" resultType="com.pos.inventory.dto.StockCountLine">
         SELECT * FROM stock_count_lines WHERE count_id = #{countId} ORDER BY product_id
     </select>
 

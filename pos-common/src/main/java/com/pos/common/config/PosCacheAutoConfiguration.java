@@ -17,10 +17,6 @@ import com.pos.common.cache.RedisTokenRevocations;
 import com.pos.common.security.JwtService;
 import com.pos.common.security.TokenRevocations;
 
-/**
- * Redis backed cache and token blocklist for the servlet services. Without Redis on the classpath, with
- * {@code pos.redis.enabled=false}, or when Redis is down, everything degrades to "no cache, tokens expire normally".
- */
 @AutoConfiguration(afterName = {
         "org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration",
         "org.springframework.boot.autoconfigure.data.redis.RedisAutoConfiguration"})

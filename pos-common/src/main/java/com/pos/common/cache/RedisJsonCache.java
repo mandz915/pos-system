@@ -12,12 +12,6 @@ import com.pos.common.tenant.TenantContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * {@link JsonCache} on Redis. Every namespace has a version number; entries live under
- * {@code pos:cache:<namespace>:<version>:<key>}. Evicting a namespace increments its version, so thousands of
- * entries are invalidated by one command and the old ones simply expire. Each instance remembers the version for
- * one second, so another instance's eviction is noticed within a second.
- */
 @Slf4j
 @RequiredArgsConstructor
 public class RedisJsonCache implements JsonCache {
@@ -31,11 +25,6 @@ public class RedisJsonCache implements JsonCache {
     private final RedisCircuit circuit;
     private final ConcurrentHashMap<String, Version> versions = new ConcurrentHashMap<>();
 
-    /**
-     * Every tenant has its own copy of each namespace, so one client can never be served another client's cached
-     * data, and a catalog change of one client does not flush everybody else's cache. Without a tenant there is no
-     * safe place to cache, so nothing is cached.
-     */
     private static String scoped(String namespace) {
         Long tenant = TenantContext.currentOrNull();
         return tenant == null ? null : namespace + ":t" + tenant;
@@ -94,7 +83,7 @@ public class RedisJsonCache implements JsonCache {
             circuit.success();
         } catch (RuntimeException e) {
             circuit.failure();
-            // Entries stay until their TTL runs out, so staleness is bounded by the TTL.
+
             log.error("Could not evict cache namespace '{}': {}", namespace, e.getMessage());
         }
     }

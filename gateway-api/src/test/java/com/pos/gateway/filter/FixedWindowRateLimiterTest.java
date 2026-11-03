@@ -10,7 +10,6 @@ import org.junit.jupiter.api.Test;
 
 class FixedWindowRateLimiterTest {
 
-    /** A clock the test can move. */
     private static final class MutableClock extends Clock {
         private Instant now;
 

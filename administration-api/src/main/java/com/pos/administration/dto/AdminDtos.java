@@ -23,7 +23,6 @@ public final class AdminDtos {
             @NotBlank @Size(max = 100) String name) {
     }
 
-    /** {@code storeId == null} writes the global default. */
     public record SettingRequest(
             Long storeId,
             @NotBlank @Size(max = 100) String key,

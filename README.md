@@ -268,11 +268,19 @@ RATE_LIMIT_PER_MINUTE=200000 ...    # start the gateway with a high per-user lim
 k6 run -e BASE=http://localhost:8080 loadtest/checkout.js
 ```
 
+## Code layout of a service
+
+`controller` (REST endpoints) → `service` → `mapper` (MyBatis) → PostgreSQL, with request/response records **and the entities** (database rows, enums) in `dto`. Business services and the REST clients are **interfaces with a `...Impl` class** next to them, for example
+`SaleService` / `SaleServiceImpl` and `CatalogClient` / `CatalogClientImpl` (nested response records such as
+`CatalogClient.ProductInfo` live on the interface). Controllers and other beans depend on the interface; the Impl carries `@Service`,
+`@Transactional` and the logic, and tests construct the Impl and mock the interface. Existing interfaces are
+`PaymentGateway`, `NotificationSender`, `JsonCache` and `TokenRevocations`.
+
 ## Persistence (MyBatis, XML style)
 
 SQL lives in XML mappers, not in annotations: each `mapper/XyzMapper.java` interface in a service has a matching
 `src/main/resources/mapper/XyzMapper.xml` whose `namespace` is the interface and whose statement `id`s are the method names.
-`mybatis.mapper-locations: classpath:mapper/*.xml` loads them, `resultType` names the entity (`domain` package), and
+`mybatis.mapper-locations: classpath:mapper/*.xml` loads them, `resultType` names the entity (`dto` package), and
 shared fragments use `<sql>` / `<include>`. Dynamic filters use `<where>` / `<if>`. Keep the interface method and the XML
 statement name in sync; an unmatched method fails at the first call with "Invalid bound statement".
 
@@ -334,7 +342,7 @@ pos-system/
 ├── pom.xml                      parent POM (modules, dependency management, Lombok processor)
 ├── pos-common/                  shared library (JWT, outbox, promotion engine, Redis cache, error handling)
 ├── pos-test-support/            MockMvc + JWT helpers for Mockito API tests
-├── gateway-api/ … notification-api/   the services (each: src/main/java with controller / dto / service / mapper / domain,
+├── gateway-api/ … notification-api/   the services (each: src/main/java with controller / dto / service / mapper,
 │                                resources/mapper/*.xml = MyBatis SQL, resources/db/migration, tests)
 ├── http/                        IntelliJ HTTP Client walkthrough (pos.http) and environments
 ├── loadtest/                    k6 load test (checkout.js)

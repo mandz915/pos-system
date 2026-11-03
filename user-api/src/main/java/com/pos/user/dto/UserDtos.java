@@ -15,7 +15,6 @@ public final class UserDtos {
     private UserDtos() {
     }
 
-    /** {@code tenant} is the company code; leave it out only for platform operators. */
     public record LoginRequest(String tenant, @NotBlank String username, @NotBlank String password) {
     }
 

@@ -78,7 +78,7 @@ class PromotionEngineTest {
     @Test
     void storeScopedPromotionOnlyAppliesInThatStore() {
         PromotionRule storeOnly = with(rule("S2", Type.FIXED, "5", null, null), null, null, null, 2L, null);
-        assertThat(discount("100.00", "1", List.of(storeOnly), Set.of()).total()).isEqualByComparingTo("0.00"); // store 1
+        assertThat(discount("100.00", "1", List.of(storeOnly), Set.of()).total()).isEqualByComparingTo("0.00");
         PromotionRule storeOne = with(rule("S1", Type.FIXED, "5", null, null), null, null, null, 1L, null);
         assertThat(discount("100.00", "1", List.of(storeOne), Set.of()).total()).isEqualByComparingTo("5.00");
     }
@@ -86,9 +86,9 @@ class PromotionEngineTest {
     @Test
     void bestSinglePromotionWinsAndTheyDoNotStack() {
         List<PromotionRule> rules = List.of(
-                rule("TEN", Type.PERCENT, "10", null, null),        // 10.00
-                rule("CAT", Type.FIXED, "25", null, 5L),            // 25.00 (category 5)
-                rule("OTHER", Type.FIXED, "50", 2L, null));         // other product
+                rule("TEN", Type.PERCENT, "10", null, null),
+                rule("CAT", Type.FIXED, "25", null, 5L),
+                rule("OTHER", Type.FIXED, "50", 2L, null));
         LineDiscount d = discount("100.00", "1", rules, Set.of());
         assertThat(d.total()).isEqualByComparingTo("25.00");
         assertThat(d.promotionCode()).isEqualTo("CAT");

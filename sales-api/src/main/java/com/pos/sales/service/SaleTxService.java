@@ -17,13 +17,13 @@ import com.pos.common.event.Topics;
 import com.pos.common.model.PaymentMethod;
 import com.pos.common.outbox.OutboxService;
 import com.pos.sales.client.PaymentClient.PaymentResult;
-import com.pos.sales.domain.Sale;
-import com.pos.sales.domain.SaleLine;
-import com.pos.sales.domain.SalePayment;
-import com.pos.sales.domain.SaleReturn;
-import com.pos.sales.domain.SaleReturnLine;
-import com.pos.sales.domain.SaleStatus;
-import com.pos.sales.domain.Shift;
+import com.pos.sales.dto.Sale;
+import com.pos.sales.dto.SaleLine;
+import com.pos.sales.dto.SalePayment;
+import com.pos.sales.dto.SaleReturn;
+import com.pos.sales.dto.SaleReturnLine;
+import com.pos.sales.dto.SaleStatus;
+import com.pos.sales.dto.Shift;
 import com.pos.sales.mapper.ReturnMapper;
 import com.pos.sales.mapper.SaleLineMapper;
 import com.pos.sales.mapper.SaleMapper;
@@ -35,16 +35,11 @@ import com.pos.sales.dto.SalesDtos.CreateSaleRequest;
 
 import lombok.RequiredArgsConstructor;
 
-/**
- * The database transactions of the sale lifecycle. Calls to other services are NOT made here: they happen in
- * {@link SaleService} so no database lock is held while waiting for the network.
- */
 @Service
 @RequiredArgsConstructor
 @Transactional
 public class SaleTxService {
 
-    /** One returned line: the line, how many units come back and the money credited for them. */
     public record RefundItem(SaleLine line, BigDecimal quantity, BigDecimal amount) {
     }
 
@@ -110,7 +105,6 @@ public class SaleTxService {
         sales.voidSale(saleId, reason);
     }
 
-    /** Marks the sale paid: receipt number, payment rows and the SaleCompleted event in one transaction. */
     public void complete(Long saleId, Plan plan, List<PaymentResult> results) {
         Sale sale = requireLocked(saleId);
         if (sale.getStatus() != SaleStatus.OPEN) {
@@ -139,7 +133,7 @@ public class SaleTxService {
                 .map(l -> new SaleCompletedEvent.Line(l.getProductId(), l.getSku(), l.getName(), l.getQuantity(),
                         l.getUnitPrice(), l.getTaxAmount(), l.getLineTotal()))
                 .toList();
-        // Taken last: the per-store sequence row stays locked until commit, so everything slow goes before it.
+
         long sequence = sales.nextReceiptNo(sale.getStoreId());
         String receiptNo = String.format("%03d-%08d", sale.getStoreId(), sequence);
         sales.complete(saleId, receiptNo, plan.paidTotal(), plan.change(), now);
@@ -150,16 +144,13 @@ public class SaleTxService {
                 sale.getTaxTotal(), sale.getTotal(), now, eventLines));
     }
 
-    /**
-     * Records returned goods; flips the sale to REFUNDED once every unit has come back.
-     */
-    public void recordRefund(Long saleId, Long shiftId, List<RefundItem> items, BigDecimal refundTotal,
+    public Long recordRefund(Long saleId, Long shiftId, List<RefundItem> items, BigDecimal refundTotal,
                              PaymentMethod method, String reason, boolean restock, Long userId) {
         Sale sale = requireLocked(saleId);
         if (sale.getStatus() != SaleStatus.COMPLETED) {
             throw ApiException.conflict("Only completed sales can be refunded (status " + sale.getStatus() + ")");
         }
-        // Re-check the remaining quantities under the lock: another refund may have run meanwhile.
+
         Map<Long, SaleLine> current = new HashMap<>();
         for (SaleLine line : lineMapper.listBySale(saleId)) {
             current.put(line.getId(), line);
@@ -204,6 +195,7 @@ public class SaleTxService {
         outbox.enqueue(Topics.SALE_REFUNDED, String.valueOf(saleId), new SaleRefundedEvent(
                 UUID.randomUUID().toString(), saleId, saleReturn.getId(), sale.getReceiptNo(), sale.getStoreId(),
                 sale.getCustomerId(), refundTotal, restock, Instant.now(), eventLines));
+        return saleReturn.getId();
     }
 
     private Sale requireLocked(Long saleId) {

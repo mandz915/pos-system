@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.catalog.domain.Promotion;
+import com.pos.catalog.dto.Promotion;
 
 @Mapper
 public interface PromotionMapper {
@@ -16,7 +16,6 @@ public interface PromotionMapper {
 
     List<Promotion> findAll();
 
-    /** Promotions that are switched on and inside their validity window right now. */
     List<Promotion> findLive();
 
     int update(Promotion promotion);

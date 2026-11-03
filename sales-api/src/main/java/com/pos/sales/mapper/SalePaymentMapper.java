@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.sales.domain.SalePayment;
+import com.pos.sales.dto.SalePayment;
 
 @Mapper
 public interface SalePaymentMapper {

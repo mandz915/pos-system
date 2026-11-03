@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 
 import com.pos.common.model.PaymentMethod;
 
-/** Development gateway: approves everything, except a payment whose reference is "DECLINE". */
 @Component
 @ConditionalOnProperty(name = "payment.gateway.provider", havingValue = "mock", matchIfMissing = true)
 public class MockPaymentGateway implements PaymentGateway {

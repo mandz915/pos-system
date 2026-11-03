@@ -6,11 +6,11 @@
         INSERT INTO tax_rates (code, name, rate, inclusive, active) VALUES (#{code}, #{name}, #{rate}, #{inclusive}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.catalog.domain.TaxRate">
+    <select id="findById" resultType="com.pos.catalog.dto.TaxRate">
         SELECT * FROM tax_rates WHERE id = #{id}
     </select>
 
-    <select id="findAll" resultType="com.pos.catalog.domain.TaxRate">
+    <select id="findAll" resultType="com.pos.catalog.dto.TaxRate">
         SELECT * FROM tax_rates ORDER BY code
     </select>
 

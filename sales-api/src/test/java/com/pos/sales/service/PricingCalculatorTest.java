@@ -7,7 +7,7 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.pos.sales.domain.SaleLine;
+import com.pos.sales.dto.SaleLine;
 import com.pos.sales.service.PricingCalculator.LineAmounts;
 import com.pos.sales.service.PricingCalculator.Totals;
 
@@ -19,7 +19,7 @@ class PricingCalculatorTest {
 
     @Test
     void inclusiveTaxIsContainedInThePrice() {
-        // 2 x 100.00, 10.00 off per unit, 12% VAT included: net 180.00, VAT = 180 * 12 / 112 = 19.29
+
         LineAmounts amounts = PricingCalculator.line(bd("2"), bd("100.00"), bd("10.00"), bd("12"), true);
 
         assertThat(amounts.discountTotal()).isEqualByComparingTo("20.00");
@@ -45,7 +45,7 @@ class PricingCalculatorTest {
 
     @Test
     void fractionalQuantityIsRoundedToCents() {
-        // 0.333 kg x 99.99 = 33.296667 -> 33.30
+
         LineAmounts amounts = PricingCalculator.line(bd("0.333"), bd("99.99"), bd("0"), bd("0"), true);
 
         assertThat(amounts.lineTotal()).isEqualByComparingTo("33.30");

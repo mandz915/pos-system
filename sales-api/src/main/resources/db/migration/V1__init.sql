@@ -11,7 +11,6 @@ CREATE TABLE shifts (
     closed_at     TIMESTAMPTZ
 );
 
--- A terminal can only have one open shift at a time.
 CREATE UNIQUE INDEX uq_shift_open_terminal ON shifts (terminal_id) WHERE status = 'OPEN';
 
 CREATE TABLE cash_movements (
@@ -24,7 +23,6 @@ CREATE TABLE cash_movements (
     created_at TIMESTAMPTZ   NOT NULL DEFAULT now()
 );
 
--- Gapless receipt numbering per store.
 CREATE TABLE receipt_sequences (
     store_id BIGINT PRIMARY KEY,
     last_no  BIGINT NOT NULL

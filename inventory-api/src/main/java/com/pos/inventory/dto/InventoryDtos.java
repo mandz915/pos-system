@@ -3,9 +3,6 @@ package com.pos.inventory.dto;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.pos.inventory.domain.StockCount;
-import com.pos.inventory.domain.StockCountLine;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.NotEmpty;
@@ -24,7 +21,6 @@ public final class InventoryDtos {
             @Size(max = 255) String note) {
     }
 
-    /** {@code delta} is signed: positive adds stock, negative removes it. */
     public record AdjustRequest(
             @NotNull Long storeId,
             @NotNull Long productId,

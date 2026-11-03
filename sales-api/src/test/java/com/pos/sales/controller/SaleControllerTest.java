@@ -28,8 +28,8 @@ import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
 import com.pos.common.error.ApiException;
-import com.pos.sales.domain.Sale;
-import com.pos.sales.domain.SaleStatus;
+import com.pos.sales.dto.Sale;
+import com.pos.sales.dto.SaleStatus;
 import com.pos.sales.service.ReceiptService;
 import com.pos.sales.service.SaleService;
 import com.pos.sales.dto.SalesDtos.CheckoutRequest;

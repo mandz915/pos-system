@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
 import com.pos.common.dto.PageResult;
-import com.pos.notification.domain.Notification;
+import com.pos.notification.dto.Notification;
 import com.pos.notification.service.NotificationService;
 
 import lombok.RequiredArgsConstructor;
@@ -31,7 +31,6 @@ public class NotificationController {
         return service.search(storeId, status, page, size);
     }
 
-    /** Puts a FAILED notification back in the queue. */
     @PostMapping("/{id}/retry")
     @RequireRole({Roles.ADMIN, Roles.MANAGER})
     public Notification retry(@PathVariable Long id) {

@@ -12,7 +12,6 @@ import org.springframework.transaction.PlatformTransactionManager;
 import com.pos.common.outbox.OutboxRelay;
 import com.pos.common.outbox.OutboxService;
 
-/** Enabled with {@code pos.outbox.enabled=true}; requires an {@code outbox} table (see Flyway V1 of the service). */
 @AutoConfiguration
 @ConditionalOnProperty(prefix = "pos.outbox", name = "enabled", havingValue = "true")
 @EnableScheduling

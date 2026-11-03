@@ -6,12 +6,12 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.customer.domain.Customer;
+import com.pos.customer.dto.Customer;
 
 @Mapper
 public interface CustomerMapper {
 
-    void insert(Customer customer);
+    int insert(Customer customer);
 
     Customer findById(@Param("id") Long id);
 
@@ -21,11 +21,11 @@ public interface CustomerMapper {
 
     long count(@Param("q") String q);
 
-    void update(Customer customer);
+    int update(Customer customer);
 
-    void setActive(@Param("id") Long id, @Param("active") boolean active);
+    int setActive(@Param("id") Long id, @Param("active") boolean active);
 
-    void setPoints(@Param("id") Long id, @Param("points") long points);
+    int setPoints(@Param("id") Long id, @Param("points") long points);
 
-    void setCreditBalance(@Param("id") Long id, @Param("balance") BigDecimal balance);
+    int setCreditBalance(@Param("id") Long id, @Param("balance") BigDecimal balance);
 }

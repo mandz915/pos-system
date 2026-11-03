@@ -14,9 +14,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
-import com.pos.reporting.domain.CashierSales;
-import com.pos.reporting.domain.DailySales;
-import com.pos.reporting.domain.ProductSales;
+import com.pos.reporting.dto.CashierSales;
+import com.pos.reporting.dto.DailySales;
+import com.pos.reporting.dto.ProductSales;
 import com.pos.reporting.service.ReportService;
 import com.pos.reporting.dto.Summary;
 

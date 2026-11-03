@@ -5,18 +5,18 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.administration.domain.Store;
+import com.pos.administration.dto.Store;
 
 @Mapper
 public interface StoreMapper {
 
-    void insert(Store store);
+    int insert(Store store);
 
     Store findById(@Param("id") Long id);
 
     List<Store> findAll();
 
-    void update(Store store);
+    int update(Store store);
 
-    void setActive(@Param("id") Long id, @Param("active") boolean active);
+    int setActive(@Param("id") Long id, @Param("active") boolean active);
 }

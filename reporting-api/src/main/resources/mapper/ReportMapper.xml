@@ -42,7 +42,7 @@
         INSERT INTO processed_events (event_id) VALUES (#{eventId}) ON CONFLICT DO NOTHING
     </insert>
 
-    <select id="daily" resultType="com.pos.reporting.domain.DailySales">
+    <select id="daily" resultType="com.pos.reporting.dto.DailySales">
         SELECT store_id, day, sales_count, gross, discount_total, tax_total, refund_count, refund_total
         FROM sales_daily
         WHERE day BETWEEN #{from} AND #{to}
@@ -50,7 +50,7 @@
         ORDER BY day, store_id
     </select>
 
-    <select id="topProducts" resultType="com.pos.reporting.domain.ProductSales">
+    <select id="topProducts" resultType="com.pos.reporting.dto.ProductSales">
         SELECT product_id, MAX(sku) AS sku, MAX(name) AS name, SUM(quantity) AS quantity, SUM(revenue) AS revenue
         FROM product_daily
         WHERE day BETWEEN #{from} AND #{to}
@@ -61,7 +61,7 @@
         LIMIT #{limit}
     </select>
 
-    <select id="byCashier" resultType="com.pos.reporting.domain.CashierSales">
+    <select id="byCashier" resultType="com.pos.reporting.dto.CashierSales">
         SELECT cashier_id, SUM(sales_count) AS sales_count, SUM(gross) AS gross
         FROM cashier_daily
         WHERE day BETWEEN #{from} AND #{to}

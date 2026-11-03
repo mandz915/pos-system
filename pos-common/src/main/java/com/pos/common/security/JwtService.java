@@ -20,7 +20,6 @@ import com.nimbusds.jwt.SignedJWT;
 
 import lombok.Getter;
 
-/** Issues and validates HS256 JSON Web Tokens. */
 public class JwtService {
 
     private final byte[] secret;
@@ -65,7 +64,6 @@ public class JwtService {
         return parseDetailed(token).user();
     }
 
-    /** Validates the token and also returns what is needed to revoke it. */
     public ParsedToken parseDetailed(String token) {
         try {
             SignedJWT jwt = SignedJWT.parse(token);

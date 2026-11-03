@@ -7,7 +7,6 @@ import org.springframework.context.annotation.Bean;
 import com.pos.common.security.JwtProperties;
 import com.pos.common.security.JwtService;
 
-/** Registers the {@link JwtService} in every service (servlet or reactive). */
 @AutoConfiguration
 @EnableConfigurationProperties(JwtProperties.class)
 public class PosSecurityAutoConfiguration {

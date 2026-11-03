@@ -36,15 +36,15 @@ class TenderPlannerTest {
     void cashOverpaymentGivesChange() {
         Plan plan = TenderPlanner.plan(bd("180.00"), List.of(pay(PaymentMethod.CASH, "200.00")));
 
-        assertThat(plan.tenders().getFirst().applied()).isEqualByComparingTo("180.00");
-        assertThat(plan.tenders().getFirst().tendered()).isEqualByComparingTo("200.00");
+        assertThat(plan.tenders().get(0).applied()).isEqualByComparingTo("180.00");
+        assertThat(plan.tenders().get(0).tendered()).isEqualByComparingTo("200.00");
         assertThat(plan.change()).isEqualByComparingTo("20.00");
         assertThat(plan.paidTotal()).isEqualByComparingTo("200.00");
     }
 
     @Test
     void splitPaymentCardThenCashWithChange() {
-        // Cash is offered first but applied last, after the (exact) card amount.
+
         Plan plan = TenderPlanner.plan(bd("500.00"),
                 List.of(pay(PaymentMethod.CASH, "300.00"), pay(PaymentMethod.CARD, "250.00")));
 

@@ -1,6 +1,5 @@
 package com.pos.user.config;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -10,20 +9,11 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import com.pos.common.security.Roles;
 import com.pos.common.tenant.TenantContext;
-import com.pos.user.domain.User;
+import com.pos.user.dto.User;
 import com.pos.user.mapper.UserMapper;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Creates the first logins on an empty system so it can be used at all:
- * <ul>
- *   <li>a platform operator ({@code PLATFORM_ADMIN}, no company) who creates the client companies, and</li>
- *   <li>an administrator for the demo company {@code DEFAULT} (tenant 1, created by the migration), which also owns
- *       the seed data of the other services.</li>
- * </ul>
- * Each runs in its own tenant context and transaction, because a connection takes its tenant when it is handed out.
- */
 @Component
 @Slf4j
 public class AdminBootstrap implements CommandLineRunner {
@@ -51,7 +41,7 @@ public class AdminBootstrap implements CommandLineRunner {
     }
 
     @Override
-    public void run(String @NonNull ... args) {
+    public void run(String... args) {
         createFirstUser(TenantContext.PLATFORM, platformUsername, platformPassword, "Platform Operator",
                 Roles.PLATFORM_ADMIN);
         createFirstUser(1L, adminUsername, adminPassword, "System Administrator", Roles.ADMIN);

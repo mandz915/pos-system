@@ -24,19 +24,16 @@ public class AuthController {
 
     private final AuthService authService;
 
-    /** Username + password login (back office, managers). */
     @PostMapping("/login")
     public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 
-    /** Fast cashier login at the till: username + numeric PIN. */
     @PostMapping("/pin-login")
     public LoginResponse pinLogin(@Valid @RequestBody PinLoginRequest request) {
         return authService.pinLogin(request);
     }
 
-    /** Ends the session: the presented token is revoked immediately. */
     @PostMapping("/logout")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void logout() {

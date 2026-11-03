@@ -1,6 +1,5 @@
 package com.pos.gateway.filter;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.cloud.gateway.filter.GatewayFilterChain;
 import org.springframework.cloud.gateway.filter.GlobalFilter;
 import org.springframework.core.Ordered;
@@ -18,14 +17,9 @@ import com.pos.gateway.config.GatewayProperties;
 
 import reactor.core.publisher.Mono;
 
-/**
- * Rejects requests without a valid, non-revoked JWT at the edge. The token is forwarded unchanged: every service
- * validates it again (defence in depth) and reads roles and store from it.
- */
 @Component
 public class JwtAuthFilter implements GlobalFilter, Ordered {
 
-    /** Exchange attribute holding the id of the authenticated user (Long), used by the rate limiter. */
     public static final String USER_ID_ATTRIBUTE = "pos.userId";
 
     private final JwtService jwtService;
@@ -39,9 +33,9 @@ public class JwtAuthFilter implements GlobalFilter, Ordered {
     }
 
     @Override
-    public Mono<Void> filter(ServerWebExchange exchange, @NonNull GatewayFilterChain chain) {
+    public Mono<Void> filter(ServerWebExchange exchange, GatewayFilterChain chain) {
         ServerHttpRequest request = exchange.getRequest();
-        // CORS pre-flight requests carry no credentials by design.
+
         if (HttpMethod.OPTIONS.equals(request.getMethod()) || publicPaths.matches(request.getURI().getPath())) {
             return chain.filter(exchange);
         }

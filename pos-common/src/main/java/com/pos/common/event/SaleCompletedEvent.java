@@ -4,7 +4,6 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.util.List;
 
-/** Published by sales-api when a sale is paid and completed. */
 public record SaleCompletedEvent(
         String eventId,
         Long saleId,

@@ -7,15 +7,15 @@
         VALUES (#{code}, #{name}, #{phone}, #{email}, #{address}, #{creditLimit}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.customer.domain.Customer">
+    <select id="findById" resultType="com.pos.customer.dto.Customer">
         SELECT * FROM customers WHERE id = #{id}
     </select>
 
-    <select id="lock" resultType="com.pos.customer.domain.Customer">
+    <select id="lock" resultType="com.pos.customer.dto.Customer">
         SELECT * FROM customers WHERE id = #{id} FOR UPDATE
     </select>
 
-    <select id="search" resultType="com.pos.customer.domain.Customer">
+    <select id="search" resultType="com.pos.customer.dto.Customer">
         SELECT * FROM customers
         <where>
           <if test="q != null">AND (name ILIKE #{q} OR code ILIKE #{q} OR phone ILIKE #{q} OR email ILIKE #{q})</if>

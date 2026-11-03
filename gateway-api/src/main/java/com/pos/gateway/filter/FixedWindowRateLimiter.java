@@ -4,10 +4,6 @@ import java.time.Clock;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 
-/**
- * Per-key fixed one-minute window counter. In memory and per gateway instance: good protection against a runaway
- * client or a login brute force, but not an exact cluster-wide quota (use Redis for that).
- */
 public class FixedWindowRateLimiter {
 
     private record Window(long minute, int count) {
@@ -23,7 +19,6 @@ public class FixedWindowRateLimiter {
         this.clock = clock;
     }
 
-    /** @return true when the request is allowed, false when the key exceeded its limit in the current minute */
     public boolean allow(String key) {
         long minute = clock.millis() / 60_000;
         cleanup(minute);
@@ -32,7 +27,6 @@ public class FixedWindowRateLimiter {
         return window.count() <= limitPerMinute;
     }
 
-    /** Seconds until the current window ends. */
     public long retryAfterSeconds() {
         return 60 - (clock.millis() / 1000) % 60;
     }

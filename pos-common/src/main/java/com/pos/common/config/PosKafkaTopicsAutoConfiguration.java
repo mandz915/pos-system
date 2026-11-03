@@ -11,11 +11,6 @@ import org.springframework.kafka.core.KafkaAdmin;
 
 import com.pos.common.event.Topics;
 
-/**
- * Creates the event topics with several partitions so consumers can run in parallel (a topic created implicitly by
- * the broker has one partition and would cap throughput at one consumer thread). Idempotent: every service may
- * declare them. Partitions can only be increased later, never decreased.
- */
 @AutoConfiguration
 @ConditionalOnClass(KafkaAdmin.class)
 @ConditionalOnProperty(prefix = "pos.kafka", name = "create-topics", havingValue = "true", matchIfMissing = true)

@@ -7,15 +7,15 @@
         VALUES (#{username}, #{passwordHash}, #{pinHash}, #{fullName}, #{email}, #{storeId}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.user.domain.User">
+    <select id="findById" resultType="com.pos.user.dto.User">
         SELECT * FROM users WHERE id = #{id}
     </select>
 
-    <select id="findByUsername" resultType="com.pos.user.domain.User">
+    <select id="findByUsername" resultType="com.pos.user.dto.User">
         SELECT * FROM users WHERE lower(username) = lower(#{username})
     </select>
 
-    <select id="search" resultType="com.pos.user.domain.User">
+    <select id="search" resultType="com.pos.user.dto.User">
         SELECT * FROM users
         <where>
           <if test="q != null">(username ILIKE #{q} OR full_name ILIKE #{q})</if>

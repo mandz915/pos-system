@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.user.domain.AuditEntry;
+import com.pos.user.dto.AuditEntry;
 
 @Mapper
 public interface AuditMapper {

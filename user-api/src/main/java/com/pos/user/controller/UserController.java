@@ -81,7 +81,6 @@ public class UserController {
         userService.setPin(id, request.pin());
     }
 
-    /** Signs the user out of every device: all tokens issued so far stop working. */
     @PostMapping("/{id}/sign-out")
     @RequireRole({Roles.ADMIN, Roles.MANAGER})
     @ResponseStatus(HttpStatus.NO_CONTENT)
@@ -89,7 +88,6 @@ public class UserController {
         userService.forceSignOut(id);
     }
 
-    /** Any signed-in user can change their own password. */
     @PutMapping("/me/password")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void changeOwnPassword(@Valid @RequestBody ChangePasswordRequest request) {

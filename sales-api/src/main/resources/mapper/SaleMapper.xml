@@ -7,15 +7,15 @@
         VALUES (#{clientRef}, #{storeId}, #{terminalId}, #{shiftId}, #{cashierId}, #{customerId}, #{status})
     </insert>
 
-    <select id="findById" resultType="com.pos.sales.domain.Sale">
+    <select id="findById" resultType="com.pos.sales.dto.Sale">
         SELECT * FROM sales WHERE id = #{id}
     </select>
 
-    <select id="lock" resultType="com.pos.sales.domain.Sale">
+    <select id="lock" resultType="com.pos.sales.dto.Sale">
         SELECT * FROM sales WHERE id = #{id} FOR UPDATE
     </select>
 
-    <select id="findByClientRef" resultType="com.pos.sales.domain.Sale">
+    <select id="findByClientRef" resultType="com.pos.sales.dto.Sale">
         SELECT * FROM sales WHERE client_ref = #{clientRef}
     </select>
 
@@ -45,7 +45,7 @@
         RETURNING last_no
     </select>
 
-    <select id="search" resultType="com.pos.sales.domain.Sale">
+    <select id="search" resultType="com.pos.sales.dto.Sale">
         SELECT * FROM sales
         <where>
           <if test="storeId != null">AND store_id = #{storeId}</if>

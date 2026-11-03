@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
 import com.pos.common.dto.PageResult;
-import com.pos.user.domain.AuditEntry;
+import com.pos.user.dto.AuditEntry;
 import com.pos.user.service.AuditService;
 
 import lombok.RequiredArgsConstructor;

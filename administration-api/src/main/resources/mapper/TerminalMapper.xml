@@ -6,11 +6,11 @@
         INSERT INTO terminals (store_id, code, name, active) VALUES (#{storeId}, #{code}, #{name}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.administration.domain.Terminal">
+    <select id="findById" resultType="com.pos.administration.dto.Terminal">
         SELECT * FROM terminals WHERE id = #{id}
     </select>
 
-    <select id="findAll" resultType="com.pos.administration.domain.Terminal">
+    <select id="findAll" resultType="com.pos.administration.dto.Terminal">
         SELECT * FROM terminals
         <where>
           <if test="storeId != null">store_id = #{storeId}</if>

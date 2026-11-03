@@ -6,16 +6,16 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.purchasing.domain.GoodsReceipt;
-import com.pos.purchasing.domain.PoLine;
-import com.pos.purchasing.domain.PurchaseOrder;
+import com.pos.purchasing.dto.GoodsReceipt;
+import com.pos.purchasing.dto.PoLine;
+import com.pos.purchasing.dto.PurchaseOrder;
 
 @Mapper
 public interface PurchaseOrderMapper {
 
     long nextNumber();
 
-    void insert(PurchaseOrder po);
+    int insert(PurchaseOrder po);
 
     PurchaseOrder findById(@Param("id") Long id);
 
@@ -29,29 +29,29 @@ public interface PurchaseOrderMapper {
 
     long count(@Param("storeId") Long storeId, @Param("status") String status, @Param("supplierId") Long supplierId);
 
-    void updateDraft(PurchaseOrder po);
+    int updateDraft(PurchaseOrder po);
 
-    void markOrdered(@Param("id") Long id);
+    int markOrdered(@Param("id") Long id);
 
-    void setStatus(@Param("id") Long id, @Param("status") String status);
+    int setStatus(@Param("id") Long id, @Param("status") String status);
 
-    void insertLine(PoLine line);
+    int insertLine(PoLine line);
 
-    void deleteLines(@Param("poId") Long poId);
+    int deleteLines(@Param("poId") Long poId);
 
     List<PoLine> lines(@Param("poId") Long poId);
 
     List<PoLine> lockLines(@Param("poId") Long poId);
 
-    void addReceived(@Param("id") Long id, @Param("quantity") BigDecimal quantity);
+    int addReceived(@Param("id") Long id, @Param("quantity") BigDecimal quantity);
 
-    void insertReceipt(GoodsReceipt receipt);
+    int insertReceipt(GoodsReceipt receipt);
 
-    void insertReceiptLine(@Param("receiptId") Long receiptId,
-                           @Param("poLineId") Long poLineId,
-                           @Param("productId") Long productId,
-                           @Param("quantity") BigDecimal quantity,
-                           @Param("unitCost") BigDecimal unitCost);
+    int insertReceiptLine(@Param("receiptId") Long receiptId,
+                          @Param("poLineId") Long poLineId,
+                          @Param("productId") Long productId,
+                          @Param("quantity") BigDecimal quantity,
+                          @Param("unitCost") BigDecimal unitCost);
 
     List<GoodsReceipt> receipts(@Param("poId") Long poId);
 }

@@ -16,9 +16,9 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
 import com.pos.common.dto.PageResult;
-import com.pos.inventory.domain.StockCount;
-import com.pos.inventory.domain.StockLevel;
-import com.pos.inventory.domain.StockMovement;
+import com.pos.inventory.dto.StockCount;
+import com.pos.inventory.dto.StockLevel;
+import com.pos.inventory.dto.StockMovement;
 import com.pos.inventory.service.StockCountService;
 import com.pos.inventory.service.StockService;
 import com.pos.inventory.dto.InventoryDtos.AdjustRequest;
@@ -32,10 +32,6 @@ import com.pos.inventory.dto.InventoryDtos.TransferRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-/**
- * Stock is queried by any signed-in user (limited to their store); changes need supervisor level or above.
- * Sales and purchase receipts update stock through Kafka events, not through this API.
- */
 @RestController
 @RequestMapping("/api/inventory")
 @RequiredArgsConstructor
@@ -91,7 +87,6 @@ public class InventoryController {
         return stock.movements(storeId, productId, page, size);
     }
 
-    // ---- physical counts
     @GetMapping("/counts")
     public List<StockCount> counts(@RequestParam(required = false) Long storeId) {
         return counts.list(storeId);

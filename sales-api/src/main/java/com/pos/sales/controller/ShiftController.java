@@ -10,8 +10,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pos.sales.domain.CashMovement;
-import com.pos.sales.domain.Shift;
+import com.pos.sales.dto.CashMovement;
+import com.pos.sales.dto.Shift;
 import com.pos.sales.service.ShiftService;
 import com.pos.sales.dto.SalesDtos.CashMovementRequest;
 import com.pos.sales.dto.SalesDtos.CloseShiftRequest;
@@ -34,7 +34,6 @@ public class ShiftController {
         return shiftService.open(request);
     }
 
-    /** The open shift of a terminal (404 when the till has no open shift). */
     @GetMapping("/current")
     public Shift current(@RequestParam Long terminalId) {
         return shiftService.current(terminalId);

@@ -3,7 +3,6 @@ package com.pos.common.util;
 import org.springframework.transaction.support.TransactionSynchronization;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-/** Runs an action once the surrounding transaction has committed (or immediately when there is none). */
 public final class AfterCommit {
 
     private AfterCommit() {

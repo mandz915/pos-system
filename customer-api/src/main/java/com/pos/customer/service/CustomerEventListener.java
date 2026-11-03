@@ -12,7 +12,6 @@ import com.pos.customer.mapper.LedgerMapper;
 
 import lombok.RequiredArgsConstructor;
 
-/** Awards loyalty points for completed sales and takes them back on refunds (idempotent per event). */
 @Component
 @RequiredArgsConstructor
 public class CustomerEventListener {

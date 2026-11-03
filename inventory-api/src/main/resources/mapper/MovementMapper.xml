@@ -7,7 +7,7 @@
         VALUES (#{storeId}, #{productId}, #{type}, #{quantity}, #{balanceAfter}, #{refType}, #{refId}, #{note}, #{createdBy})
     </insert>
 
-    <select id="search" resultType="com.pos.inventory.domain.StockMovement">
+    <select id="search" resultType="com.pos.inventory.dto.StockMovement">
         SELECT * FROM stock_movements
         <where>
           <if test="storeId != null">AND store_id = #{storeId}</if>

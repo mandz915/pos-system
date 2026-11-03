@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
 import com.pos.common.dto.PageResult;
-import com.pos.sales.domain.Sale;
+import com.pos.sales.dto.Sale;
 import com.pos.sales.service.ReceiptService;
 import com.pos.sales.service.SaleService;
 import com.pos.sales.dto.SalesDtos.CheckoutRequest;
@@ -38,7 +38,6 @@ public class SaleController {
     private final SaleService saleService;
     private final ReceiptService receiptService;
 
-    /** Creates an open sale. Send a client generated {@code clientRef} (UUID) so retries are safe. */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public SaleView create(@Valid @RequestBody CreateSaleRequest request) {
@@ -80,13 +79,11 @@ public class SaleController {
         return saleService.checkout(id, request);
     }
 
-    /** Cancels an unpaid sale. */
     @PostMapping("/{id}/void")
     public SaleView voidSale(@PathVariable Long id, @Valid @RequestBody VoidRequest request) {
         return saleService.voidSale(id, request.reason());
     }
 
-    /** Returns goods of a completed sale (supervisor level). */
     @PostMapping("/{id}/refund")
     @RequireRole({Roles.ADMIN, Roles.MANAGER, Roles.SUPERVISOR})
     public SaleView refund(@PathVariable Long id, @Valid @RequestBody RefundRequest request) {

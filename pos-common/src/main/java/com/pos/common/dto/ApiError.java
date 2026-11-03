@@ -3,7 +3,6 @@ package com.pos.common.dto;
 import java.time.Instant;
 import java.util.List;
 
-/** Uniform error body returned by every service. */
 public record ApiError(
         Instant timestamp,
         int status,

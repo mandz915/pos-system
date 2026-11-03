@@ -5,12 +5,6 @@ import java.util.Map;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.context.properties.bind.DefaultValue;
 
-/**
- * @param allowedOrigins comma separated CORS origins ("*" allows any origin, fine for development only)
- * @param publicPaths    comma separated path patterns that do not need a JWT (login)
- * @param services       base URL of every downstream service, keyed user, inventory, sales, administration, catalog,
- *                       payment, customer, purchasing, reporting, notification
- */
 @ConfigurationProperties(prefix = "pos.gateway")
 public record GatewayProperties(
         @DefaultValue("*") String allowedOrigins,
@@ -20,8 +14,11 @@ public record GatewayProperties(
 
     public record RateLimit(
             @DefaultValue("true") boolean enabled,
+
             @DefaultValue("1200") int requestsPerMinute,
+
             @DefaultValue("60") int anonymousPerMinute,
+
             @DefaultValue("false") boolean trustForwardedFor) {
     }
 }

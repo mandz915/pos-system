@@ -6,11 +6,11 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.sales.domain.AmountByLabel;
-import com.pos.sales.domain.CashMovement;
-import com.pos.sales.domain.RefundTotals;
-import com.pos.sales.domain.Shift;
-import com.pos.sales.domain.ShiftSalesTotals;
+import com.pos.sales.dto.AmountByLabel;
+import com.pos.sales.dto.CashMovement;
+import com.pos.sales.dto.RefundTotals;
+import com.pos.sales.dto.Shift;
+import com.pos.sales.dto.ShiftSalesTotals;
 
 @Mapper
 public interface ShiftMapper {
@@ -23,13 +23,14 @@ public interface ShiftMapper {
 
     Shift findOpenByTerminal(@Param("terminalId") Long terminalId);
 
-    void close(@Param("id") Long id,
-               @Param("closingCash") BigDecimal closingCash,
-               @Param("expectedCash") BigDecimal expectedCash);
+    int close(@Param("id") Long id,
+              @Param("closingCash") BigDecimal closingCash,
+              @Param("expectedCash") BigDecimal expectedCash);
 
-    void insertCashMovement(CashMovement movement);
+    int insertCashMovement(CashMovement movement);
 
-    // ---- aggregates used by the X/Z read
+    List<CashMovement> cashMovements(@Param("shiftId") Long shiftId);
+
     ShiftSalesTotals salesTotals(@Param("shiftId") Long shiftId);
 
     List<AmountByLabel> paymentsByMethod(@Param("shiftId") Long shiftId);

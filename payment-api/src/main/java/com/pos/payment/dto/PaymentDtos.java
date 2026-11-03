@@ -18,7 +18,7 @@ public final class PaymentDtos {
             @NotNull Long storeId,
             @NotNull PaymentMethod method,
             @NotNull @DecimalMin("0.01") BigDecimal amount,
-            /** Cash handed over (>= amount when change is given). Defaults to amount. */
+
             BigDecimal tendered,
             @Size(max = 100) String reference) {
     }

@@ -7,10 +7,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 
-/**
- * Pure promotion logic. Per line, the single promotion with the largest discount wins (promotions do not stack),
- * which keeps receipts explainable and avoids accidental 100% off.
- */
 public final class PromotionEngine {
 
     private static final BigDecimal HUNDRED = new BigDecimal("100");
@@ -18,25 +14,19 @@ public final class PromotionEngine {
     private PromotionEngine() {
     }
 
-    /** The discount of one line and the promotion that produced it ({@code promotionCode} is null when none applied). */
     public record LineDiscount(BigDecimal total, String promotionCode) {
         public static LineDiscount none() {
             return new LineDiscount(BigDecimal.ZERO.setScale(2), null);
         }
     }
 
-    /**
-     * Quantity-aware discount for one sale line.
-     *
-     * @param coupons the coupon codes the cashier entered (any case); coupon promotions apply only if listed
-     */
     public static LineDiscount lineDiscount(BigDecimal unitPrice, BigDecimal quantity, Long productId, Long categoryId,
                                             Long storeId, List<PromotionRule> rules, Set<String> coupons, Instant now) {
         BigDecimal gross = unitPrice.multiply(quantity).setScale(2, RoundingMode.HALF_UP);
         BigDecimal best = BigDecimal.ZERO;
         String bestCode = null;
         for (PromotionRule rule : rules) {
-            if (qualifies(rule, productId, categoryId, storeId, quantity, coupons, now)) {
+            if (!qualifies(rule, productId, categoryId, storeId, quantity, coupons, now)) {
                 continue;
             }
             BigDecimal discount = amount(rule, unitPrice, quantity, gross).min(gross);
@@ -48,16 +38,12 @@ public final class PromotionEngine {
         return bestCode == null ? LineDiscount.none() : new LineDiscount(best.setScale(2, RoundingMode.HALF_UP), bestCode);
     }
 
-    /**
-     * Per-unit discount of the automatic (no coupon, any store) promotions for a single unit; what a price lookup
-     * shows. PERCENT and FIXED only, because "buy 2 get 1" has no meaning for one unit.
-     */
     public static BigDecimal discountPerUnit(BigDecimal price, Long productId, Long categoryId,
                                              List<PromotionRule> rules, Instant now) {
         BigDecimal best = BigDecimal.ZERO;
         for (PromotionRule rule : rules) {
             if (rule.type() == PromotionRule.Type.BUY_X_GET_Y || rule.couponCode() != null || rule.storeId() != null
-                    || qualifies(rule, productId, categoryId, null, BigDecimal.ONE, Set.of(), now)) {
+                    || !qualifies(rule, productId, categoryId, null, BigDecimal.ONE, Set.of(), now)) {
                 continue;
             }
             BigDecimal discount = amount(rule, price, BigDecimal.ONE, price);
@@ -71,27 +57,27 @@ public final class PromotionEngine {
     static boolean qualifies(PromotionRule rule, Long productId, Long categoryId, Long storeId, BigDecimal quantity,
                              Set<String> coupons, Instant now) {
         if (!rule.active()) {
-            return true;
+            return false;
         }
         if (rule.startsAt() != null && now.isBefore(rule.startsAt())) {
-            return true;
+            return false;
         }
         if (rule.endsAt() != null && !now.isBefore(rule.endsAt())) {
-            return true;
+            return false;
         }
         if (rule.storeId() != null && !rule.storeId().equals(storeId)) {
-            return true;
+            return false;
         }
         if (rule.productId() != null && !rule.productId().equals(productId)) {
-            return true;
+            return false;
         }
         if (rule.productId() == null && rule.categoryId() != null && !rule.categoryId().equals(categoryId)) {
-            return true;
+            return false;
         }
         if (rule.minQty() != null && quantity.compareTo(BigDecimal.valueOf(rule.minQty())) < 0) {
-            return true;
+            return false;
         }
-        return rule.couponCode() != null && !isListed(rule.couponCode(), coupons);
+        return rule.couponCode() == null || isListed(rule.couponCode(), coupons);
     }
 
     private static boolean isListed(String couponCode, Set<String> coupons) {

@@ -6,11 +6,11 @@
         INSERT INTO categories (name, parent_id, active) VALUES (#{name}, #{parentId}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.catalog.domain.Category">
+    <select id="findById" resultType="com.pos.catalog.dto.Category">
         SELECT * FROM categories WHERE id = #{id}
     </select>
 
-    <select id="findAll" resultType="com.pos.catalog.domain.Category">
+    <select id="findAll" resultType="com.pos.catalog.dto.Category">
         SELECT * FROM categories ORDER BY name
     </select>
 

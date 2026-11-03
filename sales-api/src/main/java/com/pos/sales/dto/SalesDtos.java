@@ -6,11 +6,6 @@ import java.util.List;
 import java.util.Map;
 
 import com.pos.common.model.PaymentMethod;
-import com.pos.sales.domain.CashMovementType;
-import com.pos.sales.domain.Sale;
-import com.pos.sales.domain.SaleLine;
-import com.pos.sales.domain.SalePayment;
-import com.pos.sales.domain.SaleReturn;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMax;
@@ -25,11 +20,6 @@ public final class SalesDtos {
     private SalesDtos() {
     }
 
-    // ---- sales
-    /**
-     * Optional tax for one line. When present it replaces the tax of the catalog product (supervisor or higher).
-     * {@code inclusive == null} keeps the product's setting (tax included in the price by default).
-     */
     public record LineTax(
             @Size(max = 20) String code,
             @NotNull @DecimalMin("0") @DecimalMax("100") BigDecimal rate,
@@ -48,7 +38,7 @@ public final class SalesDtos {
             @NotNull Long terminalId,
             Long customerId,
             @NotEmpty @Valid List<LineRequest> lines,
-            /** Optional coupon codes entered at the till; they unlock matching coupon promotions. */
+
             @Size(max = 10) List<@NotBlank @Size(max = 30) String> couponCodes) {
     }
 
@@ -74,7 +64,6 @@ public final class SalesDtos {
             @NotNull @DecimalMin("0.001") BigDecimal quantity) {
     }
 
-    /** {@code lines == null} refunds everything that has not been returned yet. */
     public record RefundRequest(
             @NotBlank @Size(max = 255) String reason,
             PaymentMethod method,
@@ -85,7 +74,6 @@ public final class SalesDtos {
     public record SaleView(Sale sale, List<SaleLine> lines, List<SalePayment> payments, List<SaleReturn> returns) {
     }
 
-    // ---- shifts
     public record OpenShiftRequest(
             @NotNull Long storeId,
             @NotNull Long terminalId,
@@ -101,7 +89,6 @@ public final class SalesDtos {
             @NotBlank @Size(max = 255) String reason) {
     }
 
-    /** X-read (while open) / Z-read (after closing). */
     public record ShiftReport(
             Long shiftId,
             Long storeId,

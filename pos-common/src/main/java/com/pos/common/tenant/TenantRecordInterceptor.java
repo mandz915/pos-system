@@ -5,15 +5,10 @@ import java.nio.charset.StandardCharsets;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.header.Header;
-import org.jspecify.annotations.NonNull;
 import org.springframework.kafka.listener.RecordInterceptor;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Puts the tenant of every consumed event into {@link TenantContext} BEFORE the listener (and its transaction)
- * starts, and removes it afterwards. The tenant comes from the record header written by the outbox relay.
- */
 @Slf4j
 public class TenantRecordInterceptor implements RecordInterceptor<Object, Object> {
 
@@ -37,7 +32,7 @@ public class TenantRecordInterceptor implements RecordInterceptor<Object, Object
     }
 
     @Override
-    public void afterRecord(@NonNull ConsumerRecord<Object, Object> record, @NonNull Consumer<Object, Object> consumer) {
+    public void afterRecord(ConsumerRecord<Object, Object> record, Consumer<Object, Object> consumer) {
         TenantContext.clear();
     }
 }

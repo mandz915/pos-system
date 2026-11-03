@@ -6,11 +6,11 @@
         INSERT INTO stores (code, name, address, phone, tin, active) VALUES (#{code}, #{name}, #{address}, #{phone}, #{tin}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.administration.domain.Store">
+    <select id="findById" resultType="com.pos.administration.dto.Store">
         SELECT * FROM stores WHERE id = #{id}
     </select>
 
-    <select id="findAll" resultType="com.pos.administration.domain.Store">
+    <select id="findAll" resultType="com.pos.administration.dto.Store">
         SELECT * FROM stores ORDER BY name
     </select>
 

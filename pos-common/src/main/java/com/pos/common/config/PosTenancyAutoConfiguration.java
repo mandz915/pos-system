@@ -17,10 +17,6 @@ import com.pos.common.tenant.TenantAwareDataSource;
 import com.pos.common.tenant.TenantIsolationGuard;
 import com.pos.common.tenant.TenantRecordInterceptor;
 
-/**
- * Multi-tenancy plumbing: the database connection learns the tenant of the caller (row-level security does the
- * rest), Kafka consumers get the tenant of the event, and the application refuses a role that bypasses the policies.
- */
 @AutoConfiguration(afterName = {
         "org.springframework.boot.jdbc.autoconfigure.JdbcTemplateAutoConfiguration",
         "org.springframework.boot.autoconfigure.jdbc.JdbcTemplateAutoConfiguration"})
@@ -31,7 +27,6 @@ public class PosTenancyAutoConfiguration {
     @ConditionalOnProperty(prefix = "pos.tenancy", name = "enabled", havingValue = "true", matchIfMissing = true)
     static class Database {
 
-        /** Wraps every DataSource bean; a static method so the post-processor exists before the beans it wraps. */
         @Bean
         static BeanPostProcessor posTenantDataSourcePostProcessor() {
             return new BeanPostProcessor() {

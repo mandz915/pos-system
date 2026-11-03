@@ -38,11 +38,11 @@ import com.pos.sales.client.CatalogClient.ProductInfo;
 import com.pos.sales.client.CatalogClient.TaxInfo;
 import com.pos.sales.client.PaymentClient;
 import com.pos.sales.client.PaymentClient.PaymentResult;
-import com.pos.sales.domain.Sale;
-import com.pos.sales.domain.SaleLine;
-import com.pos.sales.domain.SaleStatus;
-import com.pos.sales.domain.Shift;
-import com.pos.sales.domain.ShiftStatus;
+import com.pos.sales.dto.Sale;
+import com.pos.sales.dto.SaleLine;
+import com.pos.sales.dto.SaleStatus;
+import com.pos.sales.dto.Shift;
+import com.pos.sales.dto.ShiftStatus;
 import com.pos.sales.mapper.ReturnMapper;
 import com.pos.sales.mapper.SaleLineMapper;
 import com.pos.sales.mapper.SaleMapper;
@@ -55,7 +55,6 @@ import com.pos.sales.dto.SalesDtos.LineRequest;
 import com.pos.sales.dto.SalesDtos.LineTax;
 import com.pos.sales.dto.SalesDtos.PaymentLine;
 
-/** The orchestration of a sale with every collaborator mocked: pricing, promotions, tax override and checkout. */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class SaleServiceTest {
@@ -77,11 +76,11 @@ class SaleServiceTest {
     @Mock
     private PaymentClient payments;
 
-    private SaleService service;
+    private SaleServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new SaleService(sales, lineMapper, paymentMapper, returns, shifts, tx, catalog, payments);
+        service = new SaleServiceImpl(sales, lineMapper, paymentMapper, returns, shifts, tx, catalog, payments);
         asCashier();
 
         Shift shift = new Shift();
@@ -91,7 +90,6 @@ class SaleServiceTest {
         when(shifts.findOpenByTerminal(1L)).thenReturn(shift);
         when(shifts.findById(3L)).thenReturn(shift);
 
-        // VAT 12% inclusive, 100.00 each, category 5
         when(catalog.getProduct(5L)).thenReturn(new ProductInfo(5L, "COFFEE", "Brewed Coffee", 5L,
                 new BigDecimal("100.00"), new TaxInfo(1L, "VAT12", new BigDecimal("12.00"), true),
                 new BigDecimal("12.00"), true, BigDecimal.ZERO, true));
@@ -117,7 +115,7 @@ class SaleServiceTest {
     }
 
     private static PromotionRule rule(String code, String value, String coupon) {
-        // PERCENT rule when coupon == null, FIXED (amount per unit) when a coupon is required
+
         Type type = coupon == null ? Type.PERCENT : Type.FIXED;
         return new PromotionRule(1L, code, code, type, new BigDecimal(value), null, null, null, null, null, null,
                 coupon, null, null, true);
@@ -132,10 +130,9 @@ class SaleServiceTest {
         ArgumentCaptor<List<SaleLine>> captor = ArgumentCaptor.forClass(List.class);
         verify(tx).createDraft(any(), any(), anyLong(), captor.capture());
         assertThat(captor.getValue()).hasSize(1);
-        return captor.getValue().getFirst();
+        return captor.getValue().get(0);
     }
 
-    // ------------------------------------------------------------------ creating a sale
     @Test
     void creatingTheSameClientRefTwiceReturnsTheFirstSaleWithoutCreatingAnother() {
         Sale existing = new Sale();
@@ -163,12 +160,12 @@ class SaleServiceTest {
         service.create(request(null, new LineRequest(5L, new BigDecimal("2"), null)));
 
         SaleLine line = createdLine();
-        assertThat(line.getDiscountTotal()).isEqualByComparingTo("20.00");   // 10% of 200.00
+        assertThat(line.getDiscountTotal()).isEqualByComparingTo("20.00");
         assertThat(line.getPromotionCode()).isEqualTo("TEN");
         assertThat(line.getTaxCode()).isEqualTo("VAT12");
         assertThat(line.isTaxOverridden()).isFalse();
         assertThat(line.getLineTotal()).isEqualByComparingTo("180.00");
-        assertThat(line.getTaxAmount()).isEqualByComparingTo("19.29");        // 180 * 12 / 112
+        assertThat(line.getTaxAmount()).isEqualByComparingTo("19.29");
     }
 
     @Test
@@ -177,7 +174,7 @@ class SaleServiceTest {
 
         SaleLine line = createdLine();
         assertThat(line.getPromotionCode()).isEqualTo("WELCOME");
-        assertThat(line.getDiscountTotal()).isEqualByComparingTo("30.00");   // 15.00 x 2 beats 10%
+        assertThat(line.getDiscountTotal()).isEqualByComparingTo("30.00");
         assertThat(line.getLineTotal()).isEqualByComparingTo("170.00");
     }
 
@@ -190,7 +187,6 @@ class SaleServiceTest {
         verify(tx, never()).createDraft(any(), any(), anyLong(), any());
     }
 
-    // ------------------------------------------------------------------ optional tax object on a line
     @Test
     void aCashierCannotOverrideTheTaxOfALine() {
         LineRequest withTax = new LineRequest(5L, BigDecimal.ONE, new LineTax("EXEMPT", BigDecimal.ZERO, null));
@@ -214,7 +210,7 @@ class SaleServiceTest {
         assertThat(line.getTaxCode()).isEqualTo("EXEMPT");
         assertThat(line.getTaxRate()).isEqualByComparingTo("0");
         assertThat(line.getTaxAmount()).isEqualByComparingTo("0.00");
-        assertThat(line.getLineTotal()).isEqualByComparingTo("180.00");      // promotion still applies
+        assertThat(line.getLineTotal()).isEqualByComparingTo("180.00");
     }
 
     @Test
@@ -228,7 +224,7 @@ class SaleServiceTest {
         SaleLine line = createdLine();
         assertThat(line.isTaxInclusive()).isFalse();
         assertThat(line.getTaxAmount()).isEqualByComparingTo("10.00");
-        assertThat(line.getLineTotal()).isEqualByComparingTo("110.00");      // 100.00 + 10% on top
+        assertThat(line.getLineTotal()).isEqualByComparingTo("110.00");
     }
 
     @Test
@@ -241,7 +237,6 @@ class SaleServiceTest {
                 .hasMessageContaining("not for sale");
     }
 
-    // ------------------------------------------------------------------ checkout
     private void openSaleOf(String total) {
         Sale sale = new Sale();
         sale.setId(5L);
@@ -261,7 +256,7 @@ class SaleServiceTest {
 
     @Test
     void whenALaterPaymentIsDeclinedTheEarlierApprovedOnesAreReversed() {
-        openSaleOf("120.00");
+        openSaleOf("100.00");
         when(payments.charge(eq(5L), eq(1L), any(Tender.class))).thenAnswer(invocation -> {
             Tender tender = invocation.getArgument(2);
             return tender.method() == PaymentMethod.EWALLET

@@ -24,11 +24,10 @@ import com.pos.common.security.AuthenticatedUser;
 import com.pos.common.security.CurrentUser;
 import com.pos.common.security.Roles;
 import com.pos.common.security.TokenRevocations;
-import com.pos.user.domain.User;
+import com.pos.user.dto.User;
 import com.pos.user.mapper.UserMapper;
 import com.pos.user.dto.UserDtos;
 
-/** Signing people out when their access changes: the security reason Redis is in this system. */
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 class UserServiceTest {
@@ -44,11 +43,11 @@ class UserServiceTest {
     @Mock
     private TokenRevocations revocations;
 
-    private UserService service;
+    private UserServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new UserService(users, passwordEncoder, authService, audit, revocations);
+        service = new UserServiceImpl(users, passwordEncoder, authService, audit, revocations);
         CurrentUser.set(new AuthenticatedUser(1L, "admin", Set.of(Roles.ADMIN), null, 1L), "token");
         User target = new User();
         target.setId(10L);

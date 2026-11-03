@@ -3,11 +3,6 @@ package com.pos.common.cache;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.LongSupplier;
 
-/**
- * Tiny circuit breaker for optional Redis features. After {@code threshold} consecutive failures Redis is skipped
- * for {@code openMillis}, so an outage costs one fast failure per window instead of a timeout on every request.
- * Everything that uses Redis here is an optimisation, so callers fall back to the database or to in-memory state.
- */
 public class RedisCircuit {
 
     private final int threshold;
@@ -26,7 +21,6 @@ public class RedisCircuit {
         this.clock = clock;
     }
 
-    /** @return true when Redis may be called now */
     public boolean allow() {
         return clock.getAsLong() >= openUntil;
     }

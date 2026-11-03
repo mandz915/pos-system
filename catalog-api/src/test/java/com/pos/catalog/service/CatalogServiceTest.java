@@ -25,9 +25,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
 
-import com.pos.catalog.domain.Product;
-import com.pos.catalog.domain.Promotion;
-import com.pos.catalog.domain.PromotionType;
+import com.pos.catalog.dto.Product;
+import com.pos.catalog.dto.Promotion;
+import com.pos.catalog.dto.PromotionType;
 import com.pos.catalog.mapper.CategoryMapper;
 import com.pos.catalog.mapper.ProductMapper;
 import com.pos.catalog.mapper.PromotionMapper;
@@ -57,11 +57,11 @@ class CatalogServiceTest {
     @Mock
     private JsonCache cache;
 
-    private CatalogService service;
+    private CatalogServiceImpl service;
 
     @BeforeEach
     void setUp() {
-        service = new CatalogService(products, categories, taxRates, promotions, cache);
+        service = new CatalogServiceImpl(products, categories, taxRates, promotions, cache);
         asCashier();
         Product coffee = new Product();
         coffee.setId(5L);
@@ -149,7 +149,7 @@ class CatalogServiceTest {
 
         verify(products).update(any(Product.class));
         verify(cache).evictAll(CacheNames.CATALOG);
-        verify(cache, never()).get(any(), any(), any()); // the answer must not come from the stale cache
+        verify(cache, never()).get(any(), any(), any());
     }
 
     @Test

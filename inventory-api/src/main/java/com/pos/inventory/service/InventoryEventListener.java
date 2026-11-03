@@ -11,16 +11,12 @@ import com.pos.common.event.GoodsReceivedEvent;
 import com.pos.common.event.SaleCompletedEvent;
 import com.pos.common.event.SaleRefundedEvent;
 import com.pos.common.event.Topics;
-import com.pos.inventory.domain.MovementType;
+import com.pos.inventory.dto.MovementType;
 import com.pos.inventory.mapper.ProcessedEventMapper;
 
 import lombok.extern.slf4j.Slf4j;
 import lombok.RequiredArgsConstructor;
 
-/**
- * Keeps stock in sync with the rest of the system. Every handler is idempotent (processed_events) and
- * transactional, so a redelivered message never double-counts.
- */
 @Component
 @RequiredArgsConstructor
 @Slf4j

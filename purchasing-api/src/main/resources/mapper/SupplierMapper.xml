@@ -6,11 +6,11 @@
         INSERT INTO suppliers (code, name, contact, phone, email, address, active) VALUES (#{code}, #{name}, #{contact}, #{phone}, #{email}, #{address}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.purchasing.domain.Supplier">
+    <select id="findById" resultType="com.pos.purchasing.dto.Supplier">
         SELECT * FROM suppliers WHERE id = #{id}
     </select>
 
-    <select id="findAll" resultType="com.pos.purchasing.domain.Supplier">
+    <select id="findAll" resultType="com.pos.purchasing.dto.Supplier">
         SELECT * FROM suppliers
         <where>
           <if test="q != null">AND (name ILIKE #{q} OR code ILIKE #{q})</if>

@@ -16,9 +16,9 @@ import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
 import com.pos.common.dto.ActiveRequest;
 import com.pos.common.dto.PageResult;
-import com.pos.customer.domain.CreditTransaction;
-import com.pos.customer.domain.Customer;
-import com.pos.customer.domain.LoyaltyTransaction;
+import com.pos.customer.dto.CreditTransaction;
+import com.pos.customer.dto.Customer;
+import com.pos.customer.dto.LoyaltyTransaction;
 import com.pos.customer.service.CustomerService;
 import com.pos.customer.dto.CustomerDtos.AdjustPointsRequest;
 import com.pos.customer.dto.CustomerDtos.CreditRequest;
@@ -65,7 +65,6 @@ public class CustomerController {
         return service.setActive(id, request.active());
     }
 
-    // ---- loyalty
     @GetMapping("/{id}/loyalty")
     public PageResult<LoyaltyTransaction> loyalty(@PathVariable Long id,
                                                   @RequestParam(required = false) Integer page,
@@ -84,7 +83,6 @@ public class CustomerController {
         return service.adjustPoints(id, request.points(), request.note());
     }
 
-    // ---- store credit
     @GetMapping("/{id}/credit")
     @RequireRole({Roles.ADMIN, Roles.MANAGER, Roles.SUPERVISOR})
     public PageResult<CreditTransaction> credit(@PathVariable Long id,

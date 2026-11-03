@@ -9,15 +9,15 @@
             #{storeId}, #{couponCode}, #{startsAt}, #{endsAt}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.catalog.domain.Promotion">
+    <select id="findById" resultType="com.pos.catalog.dto.Promotion">
         SELECT * FROM promotions WHERE id = #{id}
     </select>
 
-    <select id="findAll" resultType="com.pos.catalog.domain.Promotion">
+    <select id="findAll" resultType="com.pos.catalog.dto.Promotion">
         SELECT * FROM promotions ORDER BY id DESC
     </select>
 
-    <select id="findLive" resultType="com.pos.catalog.domain.Promotion">
+    <select id="findLive" resultType="com.pos.catalog.dto.Promotion">
         SELECT * FROM promotions
         WHERE active = TRUE
           AND (starts_at IS NULL OR starts_at &lt;= now())

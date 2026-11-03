@@ -18,12 +18,12 @@ public class ClientConfig {
     @Bean
     public CatalogClient catalogClient(@Value("${pos.services.catalog-url}") String baseUrl,
                                        ObjectProvider<JsonCache> cache) {
-        return new CatalogClient(restClient(baseUrl), cache.getIfAvailable(() -> JsonCache.NONE));
+        return new CatalogClientImpl(restClient(baseUrl), cache.getIfAvailable(() -> JsonCache.NONE));
     }
 
     @Bean
     public PaymentClient paymentClient(@Value("${pos.services.payment-url}") String baseUrl) {
-        return new PaymentClient(restClient(baseUrl));
+        return new PaymentClientImpl(restClient(baseUrl));
     }
 
     private static RestClient restClient(String baseUrl) {

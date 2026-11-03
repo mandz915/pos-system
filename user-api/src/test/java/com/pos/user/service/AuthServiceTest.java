@@ -34,8 +34,8 @@ import com.pos.common.security.ParsedToken;
 import com.pos.common.security.Roles;
 import com.pos.common.security.TokenRevocations;
 import com.pos.common.tenant.TenantContext;
-import com.pos.user.domain.Tenant;
-import com.pos.user.domain.User;
+import com.pos.user.dto.Tenant;
+import com.pos.user.dto.User;
 import com.pos.user.mapper.TenantMapper;
 import com.pos.user.mapper.UserMapper;
 import com.pos.user.dto.UserDtos.LoginRequest;
@@ -58,7 +58,7 @@ class AuthServiceTest {
     @Mock
     private TokenRevocations revocations;
 
-    private AuthService service;
+    private AuthServiceImpl service;
 
     private static Tenant tenant(long id, String status) {
         Tenant t = new Tenant();
@@ -72,7 +72,7 @@ class AuthServiceTest {
     @BeforeEach
     void setUp() {
         when(tenants.findByCode("ACME")).thenReturn(tenant(7L, Tenant.ACTIVE));
-        service = new AuthService(users, tenants, encoder, jwt, audit, revocations);
+        service = new AuthServiceImpl(users, tenants, encoder, jwt, audit, revocations);
     }
 
     @AfterEach

@@ -12,7 +12,7 @@
         VALUES (#{returnId}, #{saleLineId}, #{productId}, #{quantity}, #{amount})
     </insert>
 
-    <select id="listBySale" resultType="com.pos.sales.domain.SaleReturn">
+    <select id="listBySale" resultType="com.pos.sales.dto.SaleReturn">
         SELECT * FROM sale_returns WHERE sale_id = #{saleId} ORDER BY id
     </select>
 

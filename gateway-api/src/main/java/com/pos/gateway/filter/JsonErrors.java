@@ -10,7 +10,6 @@ import org.springframework.web.server.ServerWebExchange;
 
 import reactor.core.publisher.Mono;
 
-/** Writes the same error JSON shape the services use ({@code ApiError}). */
 final class JsonErrors {
 
     private JsonErrors() {

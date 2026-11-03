@@ -6,8 +6,8 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.inventory.domain.StockCount;
-import com.pos.inventory.domain.StockCountLine;
+import com.pos.inventory.dto.StockCount;
+import com.pos.inventory.dto.StockCountLine;
 
 @Mapper
 public interface StockCountMapper {
@@ -20,11 +20,11 @@ public interface StockCountMapper {
 
     List<StockCount> findAll(@Param("storeId") Long storeId);
 
-    void markPosted(@Param("id") Long id);
+    int markPosted(@Param("id") Long id);
 
-    void upsertLine(@Param("countId") Long countId, @Param("productId") Long productId, @Param("countedQty") BigDecimal countedQty);
+    int upsertLine(@Param("countId") Long countId, @Param("productId") Long productId, @Param("countedQty") BigDecimal countedQty);
 
-    void setSystemQty(@Param("id") Long id, @Param("systemQty") BigDecimal systemQty);
+    int setSystemQty(@Param("id") Long id, @Param("systemQty") BigDecimal systemQty);
 
     List<StockCountLine> lines(@Param("countId") Long countId);
 }

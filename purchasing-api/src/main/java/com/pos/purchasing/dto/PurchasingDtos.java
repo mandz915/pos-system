@@ -3,10 +3,6 @@ package com.pos.purchasing.dto;
 import java.math.BigDecimal;
 import java.util.List;
 
-import com.pos.purchasing.domain.GoodsReceipt;
-import com.pos.purchasing.domain.PoLine;
-import com.pos.purchasing.domain.PurchaseOrder;
-
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Email;

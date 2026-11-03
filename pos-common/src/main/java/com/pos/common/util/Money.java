@@ -3,7 +3,6 @@ package com.pos.common.util;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 
-/** Money helpers: every amount is kept at two decimals, rounded half-up. */
 public final class Money {
 
     public static final BigDecimal HUNDRED = new BigDecimal("100");

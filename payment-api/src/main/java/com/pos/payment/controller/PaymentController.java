@@ -16,8 +16,8 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
-import com.pos.payment.domain.Payment;
-import com.pos.payment.domain.ReconciliationRow;
+import com.pos.payment.dto.Payment;
+import com.pos.payment.dto.ReconciliationRow;
 import com.pos.payment.service.PaymentService;
 import com.pos.payment.dto.PaymentDtos.ChargeRequest;
 import com.pos.payment.dto.PaymentDtos.RefundCall;
@@ -32,7 +32,6 @@ public class PaymentController {
 
     private final PaymentService service;
 
-    /** Called by sales-api at checkout (with the cashier's token). */
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public Payment charge(@Valid @RequestBody ChargeRequest request) {
@@ -46,7 +45,6 @@ public class PaymentController {
         return service.refund(request);
     }
 
-    /** Undo a payment taken moments ago (used when a checkout fails half-way). */
     @PostMapping("/{id}/reverse")
     @ResponseStatus(HttpStatus.CREATED)
     public Payment reverse(@PathVariable Long id) {

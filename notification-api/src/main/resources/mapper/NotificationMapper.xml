@@ -8,7 +8,7 @@
         ON CONFLICT (event_id) DO NOTHING
     </insert>
 
-    <select id="claimPending" resultType="com.pos.notification.domain.Notification">
+    <select id="claimPending" resultType="com.pos.notification.dto.Notification">
         SELECT * FROM notifications WHERE status = 'PENDING' ORDER BY id LIMIT #{limit} FOR UPDATE SKIP LOCKED
     </select>
 
@@ -28,11 +28,11 @@
         UPDATE notifications SET status = 'PENDING', attempts = 0, last_error = NULL WHERE id = #{id} AND status = 'FAILED'
     </update>
 
-    <select id="findById" resultType="com.pos.notification.domain.Notification">
+    <select id="findById" resultType="com.pos.notification.dto.Notification">
         SELECT * FROM notifications WHERE id = #{id}
     </select>
 
-    <select id="search" resultType="com.pos.notification.domain.Notification">
+    <select id="search" resultType="com.pos.notification.dto.Notification">
         SELECT * FROM notifications
         <where>
           <if test="storeId != null">AND store_id = #{storeId}</if>

@@ -22,7 +22,6 @@ import com.pos.user.dto.TenantDtos.UpdateTenantRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-/** Platform operators manage client companies here. Company administrators manage everything else themselves. */
 @RestController
 @RequestMapping("/api/platform/tenants")
 @RequiredArgsConstructor

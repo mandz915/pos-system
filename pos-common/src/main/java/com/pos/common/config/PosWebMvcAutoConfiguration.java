@@ -3,7 +3,6 @@ package com.pos.common.config;
 import java.util.Arrays;
 import java.util.List;
 
-import org.jspecify.annotations.NonNull;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
@@ -17,10 +16,6 @@ import com.pos.common.security.TokenRevocations;
 import com.pos.common.controller.AuthInterceptor;
 import com.pos.common.controller.GlobalExceptionHandler;
 
-/**
- * Servlet-only wiring: JWT authentication for {@code /api/**} and the shared error handler.
- * Skipped in the WebFlux gateway because Spring MVC is not on its classpath.
- */
 @AutoConfiguration
 @ConditionalOnClass(name = "org.springframework.web.servlet.DispatcherServlet")
 public class PosWebMvcAutoConfiguration {
@@ -43,7 +38,7 @@ public class PosWebMvcAutoConfiguration {
                 .toList();
         return new WebMvcConfigurer() {
             @Override
-            public void addInterceptors(@NonNull InterceptorRegistry registry) {
+            public void addInterceptors(InterceptorRegistry registry) {
                 registry.addInterceptor(interceptor)
                         .addPathPatterns("/api/**")
                         .excludePathPatterns(publicPaths);

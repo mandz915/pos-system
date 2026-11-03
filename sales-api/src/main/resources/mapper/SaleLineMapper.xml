@@ -9,7 +9,7 @@
             #{discountTotal}, #{taxCode}, #{taxOverridden}, #{taxRate}, #{taxInclusive}, #{taxAmount}, #{promotionCode}, #{lineTotal})
     </insert>
 
-    <select id="listBySale" resultType="com.pos.sales.domain.SaleLine">
+    <select id="listBySale" resultType="com.pos.sales.dto.SaleLine">
         SELECT * FROM sale_lines WHERE sale_id = #{saleId} ORDER BY line_no
     </select>
 

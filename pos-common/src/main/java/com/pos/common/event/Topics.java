@@ -1,6 +1,5 @@
 package com.pos.common.event;
 
-/** Kafka topic names shared by producers and consumers. */
 public final class Topics {
 
     public static final String SALE_COMPLETED = "pos.sale.completed";

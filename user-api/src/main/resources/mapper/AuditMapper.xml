@@ -7,7 +7,7 @@
         VALUES (#{userId}, #{username}, #{action}, #{entity}, #{entityId}, #{details})
     </insert>
 
-    <select id="search" resultType="com.pos.user.domain.AuditEntry">
+    <select id="search" resultType="com.pos.user.dto.AuditEntry">
         SELECT * FROM audit_log
         <where>
           <if test="userId != null">AND user_id = #{userId}</if>

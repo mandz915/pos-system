@@ -21,16 +21,6 @@ import com.pos.common.tenant.TenantHeaders;
 
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Periodically publishes unpublished outbox rows to Kafka (safe to run on several instances).
- *
- * <p>Throughput: a whole batch is sent asynchronously and acknowledged together, then marked published with one
- * batched update, and the relay keeps draining while batches come back full. Sending row by row (the first version)
- * topped out around 75 events per second, below what 10,000 sales per minute produces.
- *
- * <p>Delivery is at-least-once: if the process dies after Kafka accepted a row but before the update, the row is sent
- * again. Consumers de-duplicate on the event id.
- */
 @Slf4j
 public class OutboxRelay {
 
@@ -67,7 +57,6 @@ public class OutboxRelay {
         }
     }
 
-    /** Events carry the tenant in a header so consumers can scope their database work to it. */
     private CompletableFuture<?> send(Map<String, Object> row) {
         String topic = (String) row.get("topic");
         String key = (String) row.get("msg_key");
@@ -81,7 +70,6 @@ public class OutboxRelay {
         return kafka.send(record);
     }
 
-    /** @return the number of rows that were selected (a full batch means there may be more) */
     private int publishBatch() {
         List<Map<String, Object>> rows = jdbc.queryForList(
                 "SELECT id, topic, msg_key, payload, tenant_id FROM outbox WHERE published_at IS NULL "
@@ -93,7 +81,7 @@ public class OutboxRelay {
         for (Map<String, Object> row : rows) {
             sends.add(send(row));
         }
-        // Mark the longest prefix that Kafka acknowledged; stop at the first failure so order is kept on retry.
+
         long deadline = System.currentTimeMillis() + 10_000;
         List<Object[]> done = new ArrayList<>(rows.size());
         for (int i = 0; i < rows.size(); i++) {
@@ -111,6 +99,6 @@ public class OutboxRelay {
         if (!done.isEmpty()) {
             jdbc.batchUpdate("UPDATE outbox SET published_at = now() WHERE id = ?", done);
         }
-        return done.size() == rows.size() ? rows.size() : 0; // after a failure do not spin: wait for the next tick
+        return done.size() == rows.size() ? rows.size() : 0;
     }
 }

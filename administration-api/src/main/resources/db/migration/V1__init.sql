@@ -21,7 +21,6 @@ CREATE TABLE terminals (
 
 CREATE INDEX idx_terminals_store ON terminals (store_id);
 
--- store_id = 0 holds the global default; a row for a concrete store overrides it.
 CREATE TABLE settings (
     store_id      BIGINT       NOT NULL DEFAULT 0,
     setting_key   VARCHAR(100) NOT NULL,

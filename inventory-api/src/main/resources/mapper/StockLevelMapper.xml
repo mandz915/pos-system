@@ -6,11 +6,11 @@
         INSERT INTO stock_levels (store_id, product_id) VALUES (#{storeId}, #{productId}) ON CONFLICT (store_id, product_id) DO NOTHING
     </insert>
 
-    <select id="lock" resultType="com.pos.inventory.domain.StockLevel">
+    <select id="lock" resultType="com.pos.inventory.dto.StockLevel">
         SELECT * FROM stock_levels WHERE store_id = #{storeId} AND product_id = #{productId} FOR UPDATE
     </select>
 
-    <select id="find" resultType="com.pos.inventory.domain.StockLevel">
+    <select id="find" resultType="com.pos.inventory.dto.StockLevel">
         SELECT * FROM stock_levels WHERE store_id = #{storeId} AND product_id = #{productId}
     </select>
 
@@ -22,7 +22,7 @@
         UPDATE stock_levels SET reorder_level = #{level}, updated_at = now() WHERE store_id = #{storeId} AND product_id = #{productId}
     </update>
 
-    <select id="search" resultType="com.pos.inventory.domain.StockLevel">
+    <select id="search" resultType="com.pos.inventory.dto.StockLevel">
         SELECT * FROM stock_levels
         <where>
           <if test="storeId != null">AND store_id = #{storeId}</if>

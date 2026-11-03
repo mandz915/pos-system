@@ -7,19 +7,18 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.payment.domain.Payment;
-import com.pos.payment.domain.ReconciliationRow;
+import com.pos.payment.dto.Payment;
+import com.pos.payment.dto.ReconciliationRow;
 
 @Mapper
 public interface PaymentMapper {
 
-    void insert(Payment payment);
+    int insert(Payment payment);
 
     Payment findById(@Param("id") Long id);
 
     List<Payment> findBySale(@Param("saleId") Long saleId);
 
-    /** Sum of approved rows of one kind ('PAYMENT' or 'REFUND') for a sale. */
     BigDecimal sumApproved(@Param("saleId") Long saleId, @Param("kind") String kind);
 
     List<ReconciliationRow> reconciliation(@Param("storeId") Long storeId,

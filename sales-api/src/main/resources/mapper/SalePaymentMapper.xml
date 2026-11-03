@@ -7,7 +7,7 @@
         VALUES (#{saleId}, #{method}, #{amount}, #{tendered}, #{reference}, #{paymentId}, #{gatewayRef})
     </insert>
 
-    <select id="listBySale" resultType="com.pos.sales.domain.SalePayment">
+    <select id="listBySale" resultType="com.pos.sales.dto.SalePayment">
         SELECT * FROM sale_payments WHERE sale_id = #{saleId} ORDER BY id
     </select>
 

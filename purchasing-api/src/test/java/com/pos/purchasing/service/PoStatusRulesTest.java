@@ -7,8 +7,8 @@ import java.util.List;
 
 import org.junit.jupiter.api.Test;
 
-import com.pos.purchasing.domain.PoLine;
-import com.pos.purchasing.domain.PoStatus;
+import com.pos.purchasing.dto.PoLine;
+import com.pos.purchasing.dto.PoStatus;
 
 class PoStatusRulesTest {
 

@@ -3,7 +3,6 @@ package com.pos.notification.service;
 import com.pos.common.event.GoodsReceivedEvent;
 import com.pos.common.event.LowStockEvent;
 
-/** Message texts, kept pure so they can be unit tested. */
 public final class NotificationTemplates {
 
     private NotificationTemplates() {

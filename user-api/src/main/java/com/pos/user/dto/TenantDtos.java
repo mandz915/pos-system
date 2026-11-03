@@ -11,7 +11,6 @@ public final class TenantDtos {
     private TenantDtos() {
     }
 
-    /** Creates a client company together with its first administrator. */
     public record CreateTenantRequest(
             @NotBlank @Pattern(regexp = "[A-Za-z0-9_-]{2,30}", message = "Code must be 2 to 30 letters, digits, - or _")
             String code,

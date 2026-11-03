@@ -30,8 +30,8 @@ import com.pos.common.security.CurrentUser;
 import com.pos.common.security.Roles;
 import com.pos.common.security.TokenRevocations;
 import com.pos.common.tenant.TenantContext;
-import com.pos.user.domain.Tenant;
-import com.pos.user.domain.User;
+import com.pos.user.dto.Tenant;
+import com.pos.user.dto.User;
 import com.pos.user.mapper.TenantMapper;
 import com.pos.user.mapper.UserMapper;
 import com.pos.user.dto.TenantDtos.CreateTenantRequest;
@@ -52,7 +52,7 @@ class TenantServiceTest {
     @Mock
     private PlatformTransactionManager txManager;
 
-    private TenantService service;
+    private TenantServiceImpl service;
 
     private static final CreateTenantRequest REQUEST =
             new CreateTenantRequest("acme", "Acme Retail", "boss", "Secret#123", null);
@@ -60,7 +60,7 @@ class TenantServiceTest {
     @BeforeEach
     void setUp() {
         when(txManager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
-        service = new TenantService(tenants, users, new BCryptPasswordEncoder(4), revocations, audit, txManager);
+        service = new TenantServiceImpl(tenants, users, new BCryptPasswordEncoder(4), revocations, audit, txManager);
         CurrentUser.set(new AuthenticatedUser(100L, "platform", Set.of(Roles.PLATFORM_ADMIN), null, 0L), "token");
         doAnswer(call -> {
             Tenant t = call.getArgument(0);

@@ -14,12 +14,10 @@ import org.springframework.web.cors.reactive.UrlBasedCorsConfigurationSource;
 
 import com.pos.gateway.config.GatewayProperties;
 
-/** Maps the public {@code /api/**} paths to the services that own them. */
 @Configuration
 @EnableConfigurationProperties(GatewayProperties.class)
 public class RouteConfig {
 
-    /** service key (see {@link GatewayProperties#services()}) to the path prefixes it owns. */
     static final String[][] ROUTES = {
             {"user", "/api/auth/**", "/api/users/**", "/api/roles/**", "/api/audit/**", "/api/platform/**"},
             {"inventory", "/api/inventory/**"},

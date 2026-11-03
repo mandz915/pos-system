@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.catalog.domain.Product;
+import com.pos.catalog.dto.Product;
 
 @Mapper
 public interface ProductMapper {
@@ -28,5 +28,5 @@ public interface ProductMapper {
 
     int update(Product product);
 
-    void setActive(@Param("id") Long id, @Param("active") boolean active);
+    int setActive(@Param("id") Long id, @Param("active") boolean active);
 }

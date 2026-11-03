@@ -24,8 +24,8 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.test.web.servlet.MockMvc;
 
-import com.pos.catalog.domain.Promotion;
-import com.pos.catalog.domain.PromotionType;
+import com.pos.catalog.dto.Promotion;
+import com.pos.catalog.dto.PromotionType;
 import com.pos.catalog.service.CatalogService;
 import com.pos.catalog.dto.CatalogDtos.ProductView;
 import com.pos.catalog.dto.CatalogDtos.PromotionRequest;

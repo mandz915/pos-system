@@ -15,8 +15,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.pos.administration.domain.Store;
-import com.pos.administration.domain.Terminal;
+import com.pos.administration.dto.Store;
+import com.pos.administration.dto.Terminal;
 import com.pos.administration.service.AdminService;
 import com.pos.administration.dto.AdminDtos.SettingRequest;
 import com.pos.administration.dto.AdminDtos.StoreRequest;
@@ -36,7 +36,6 @@ public class AdminController {
 
     private final AdminService admin;
 
-    // ---- stores (read: any signed-in user; write: ADMIN)
     @GetMapping("/stores")
     public List<Store> stores() {
         return admin.listStores();
@@ -66,7 +65,6 @@ public class AdminController {
         return admin.setStoreActive(id, request.active());
     }
 
-    // ---- terminals
     @GetMapping("/terminals")
     public List<Terminal> terminals(@RequestParam(required = false) Long storeId) {
         return admin.listTerminals(storeId);
@@ -98,14 +96,12 @@ public class AdminController {
         return admin.setTerminalActive(id, request.active());
     }
 
-    /** Terminals call this periodically so back office can see which tills are online. */
     @PostMapping("/terminals/{id}/heartbeat")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void heartbeat(@PathVariable Long id) {
         admin.heartbeat(id);
     }
 
-    // ---- settings
     @GetMapping("/settings")
     public Map<String, String> settings(@RequestParam(required = false) Long storeId) {
         CurrentUser.requireStoreAccess(storeId);

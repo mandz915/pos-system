@@ -7,7 +7,7 @@
         VALUES (#{customerId}, #{type}, #{points}, #{balance}, #{refType}, #{refId}, #{note})
     </insert>
 
-    <select id="loyaltyHistory" resultType="com.pos.customer.domain.LoyaltyTransaction">
+    <select id="loyaltyHistory" resultType="com.pos.customer.dto.LoyaltyTransaction">
         SELECT * FROM loyalty_transactions WHERE customer_id = #{customerId} ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
     </select>
 
@@ -20,7 +20,7 @@
         VALUES (#{customerId}, #{type}, #{amount}, #{balance}, #{refType}, #{refId}, #{note})
     </insert>
 
-    <select id="creditHistory" resultType="com.pos.customer.domain.CreditTransaction">
+    <select id="creditHistory" resultType="com.pos.customer.dto.CreditTransaction">
         SELECT * FROM credit_transactions WHERE customer_id = #{customerId} ORDER BY id DESC LIMIT #{size} OFFSET #{offset}
     </select>
 

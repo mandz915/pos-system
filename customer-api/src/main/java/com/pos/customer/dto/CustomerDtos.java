@@ -28,7 +28,6 @@ public final class CustomerDtos {
             @Size(max = 255) String note) {
     }
 
-    /** Signed manual correction of the points balance. */
     public record AdjustPointsRequest(
             @NotNull Long points,
             @NotBlank @Size(max = 255) String note) {

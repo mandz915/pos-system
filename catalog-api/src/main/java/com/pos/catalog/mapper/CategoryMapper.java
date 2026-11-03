@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.catalog.domain.Category;
+import com.pos.catalog.dto.Category;
 
 @Mapper
 public interface CategoryMapper {
@@ -18,5 +18,5 @@ public interface CategoryMapper {
 
     int update(Category category);
 
-    void setActive(@Param("id") Long id, @Param("active") boolean active);
+    int setActive(@Param("id") Long id, @Param("active") boolean active);
 }

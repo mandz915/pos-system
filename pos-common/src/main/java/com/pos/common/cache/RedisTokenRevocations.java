@@ -13,14 +13,9 @@ import com.pos.common.security.TokenRevocations;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-/**
- * Token blocklist on Redis. Reads fail open: if Redis is unreachable requests are still served (a till must keep
- * selling) and revoked tokens are only caught again when Redis returns or the token expires.
- */
 @Slf4j
 @RequiredArgsConstructor
 public class RedisTokenRevocations implements TokenRevocations {
-
 
     private final StringRedisTemplate redis;
     private final RedisCircuit circuit;

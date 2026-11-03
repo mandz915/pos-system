@@ -11,15 +11,15 @@
         VALUES (#{poNumber}, #{supplierId}, #{storeId}, #{status}, #{note}, #{createdBy})
     </insert>
 
-    <select id="findById" resultType="com.pos.purchasing.domain.PurchaseOrder">
+    <select id="findById" resultType="com.pos.purchasing.dto.PurchaseOrder">
         SELECT * FROM purchase_orders WHERE id = #{id}
     </select>
 
-    <select id="lock" resultType="com.pos.purchasing.domain.PurchaseOrder">
+    <select id="lock" resultType="com.pos.purchasing.dto.PurchaseOrder">
         SELECT * FROM purchase_orders WHERE id = #{id} FOR UPDATE
     </select>
 
-    <select id="search" resultType="com.pos.purchasing.domain.PurchaseOrder">
+    <select id="search" resultType="com.pos.purchasing.dto.PurchaseOrder">
         SELECT * FROM purchase_orders
         <where>
           <if test="storeId != null">AND store_id = #{storeId}</if>
@@ -58,11 +58,11 @@
         DELETE FROM po_lines WHERE po_id = #{poId}
     </delete>
 
-    <select id="lines" resultType="com.pos.purchasing.domain.PoLine">
+    <select id="lines" resultType="com.pos.purchasing.dto.PoLine">
         SELECT * FROM po_lines WHERE po_id = #{poId} ORDER BY id
     </select>
 
-    <select id="lockLines" resultType="com.pos.purchasing.domain.PoLine">
+    <select id="lockLines" resultType="com.pos.purchasing.dto.PoLine">
         SELECT * FROM po_lines WHERE po_id = #{poId} FOR UPDATE
     </select>
 
@@ -79,7 +79,7 @@
         VALUES (#{receiptId}, #{poLineId}, #{productId}, #{quantity}, #{unitCost})
     </insert>
 
-    <select id="receipts" resultType="com.pos.purchasing.domain.GoodsReceipt">
+    <select id="receipts" resultType="com.pos.purchasing.dto.GoodsReceipt">
         SELECT * FROM goods_receipts WHERE po_id = #{poId} ORDER BY id
     </select>
 

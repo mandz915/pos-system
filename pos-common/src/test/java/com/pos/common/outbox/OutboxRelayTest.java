@@ -130,6 +130,6 @@ class OutboxRelayTest {
     void aDatabaseErrorIsLoggedAndRetriedOnTheNextTickInsteadOfKillingTheScheduler() {
         when(jdbc.queryForList(anyString())).thenThrow(new IllegalStateException("db down"));
 
-        relay.relay(); // must not throw
+        relay.relay();
     }
 }

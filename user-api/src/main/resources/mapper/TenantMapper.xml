@@ -6,15 +6,15 @@
         INSERT INTO tenants (code, name) VALUES (#{code}, #{name})
     </insert>
 
-    <select id="findById" resultType="com.pos.user.domain.Tenant">
+    <select id="findById" resultType="com.pos.user.dto.Tenant">
         SELECT * FROM tenants WHERE id = #{id}
     </select>
 
-    <select id="findByCode" resultType="com.pos.user.domain.Tenant">
+    <select id="findByCode" resultType="com.pos.user.dto.Tenant">
         SELECT * FROM tenants WHERE upper(code) = upper(#{code})
     </select>
 
-    <select id="search" resultType="com.pos.user.domain.Tenant">
+    <select id="search" resultType="com.pos.user.dto.Tenant">
         SELECT * FROM tenants
         <where>
           <if test="q != null">(code ILIKE #{q} OR name ILIKE #{q})</if>

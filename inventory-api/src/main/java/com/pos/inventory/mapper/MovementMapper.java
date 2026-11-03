@@ -5,7 +5,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.inventory.domain.StockMovement;
+import com.pos.inventory.dto.StockMovement;
 
 @Mapper
 public interface MovementMapper {

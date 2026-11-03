@@ -6,7 +6,7 @@ import java.util.List;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
-import com.pos.sales.domain.SaleLine;
+import com.pos.sales.dto.SaleLine;
 
 @Mapper
 public interface SaleLineMapper {
@@ -15,9 +15,9 @@ public interface SaleLineMapper {
 
     List<SaleLine> listBySale(@Param("saleId") Long saleId);
 
-    void deleteBySale(@Param("saleId") Long saleId);
+    int deleteBySale(@Param("saleId") Long saleId);
 
-    void addReturned(@Param("id") Long id, @Param("quantity") BigDecimal quantity);
+    int addReturned(@Param("id") Long id, @Param("quantity") BigDecimal quantity);
 
     long countNotFullyReturned(@Param("saleId") Long saleId);
 }

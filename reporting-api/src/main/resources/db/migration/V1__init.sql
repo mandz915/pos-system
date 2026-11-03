@@ -1,4 +1,3 @@
--- Read models built from Kafka events (sale completed / refunded). Safe to rebuild by replaying the topics.
 CREATE TABLE sales_daily (
     store_id       BIGINT        NOT NULL,
     day            DATE          NOT NULL,

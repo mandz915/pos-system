@@ -18,8 +18,8 @@ import com.pos.common.security.RequireRole;
 import com.pos.common.security.Roles;
 import com.pos.common.dto.ActiveRequest;
 import com.pos.common.dto.PageResult;
-import com.pos.purchasing.domain.PurchaseOrder;
-import com.pos.purchasing.domain.Supplier;
+import com.pos.purchasing.dto.PurchaseOrder;
+import com.pos.purchasing.dto.Supplier;
 import com.pos.purchasing.service.PurchasingService;
 import com.pos.purchasing.dto.PurchasingDtos.CreatePoRequest;
 import com.pos.purchasing.dto.PurchasingDtos.PoView;
@@ -30,7 +30,6 @@ import com.pos.purchasing.dto.PurchasingDtos.UpdatePoRequest;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
-/** Purchasing is back-office work: managers and supervisors only (receiving goods is open to supervisors). */
 @RestController
 @RequestMapping("/api/purchasing")
 @RequiredArgsConstructor
@@ -39,7 +38,6 @@ public class PurchasingController {
 
     private final PurchasingService service;
 
-    // ---- suppliers
     @GetMapping("/suppliers")
     public List<Supplier> suppliers(@RequestParam(required = false) String q) {
         return service.listSuppliers(q);
@@ -69,7 +67,6 @@ public class PurchasingController {
         return service.setSupplierActive(id, request.active());
     }
 
-    // ---- purchase orders
     @GetMapping("/orders")
     public PageResult<PurchaseOrder> orders(@RequestParam(required = false) Long storeId,
                                             @RequestParam(required = false) String status,

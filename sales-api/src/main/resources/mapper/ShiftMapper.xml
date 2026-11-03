@@ -7,15 +7,15 @@
         VALUES (#{storeId}, #{terminalId}, #{cashierId}, #{status}, #{openingCash})
     </insert>
 
-    <select id="findById" resultType="com.pos.sales.domain.Shift">
+    <select id="findById" resultType="com.pos.sales.dto.Shift">
         SELECT * FROM shifts WHERE id = #{id}
     </select>
 
-    <select id="lock" resultType="com.pos.sales.domain.Shift">
+    <select id="lock" resultType="com.pos.sales.dto.Shift">
         SELECT * FROM shifts WHERE id = #{id} FOR UPDATE
     </select>
 
-    <select id="findOpenByTerminal" resultType="com.pos.sales.domain.Shift">
+    <select id="findOpenByTerminal" resultType="com.pos.sales.dto.Shift">
         SELECT * FROM shifts WHERE terminal_id = #{terminalId} AND status = 'OPEN'
     </select>
 
@@ -30,11 +30,11 @@
         VALUES (#{shiftId}, #{type}, #{amount}, #{reason}, #{createdBy})
     </insert>
 
-    <select id="cashMovements" resultType="com.pos.sales.domain.CashMovement">
+    <select id="cashMovements" resultType="com.pos.sales.dto.CashMovement">
         SELECT * FROM cash_movements WHERE shift_id = #{shiftId} ORDER BY id
     </select>
 
-    <select id="salesTotals" resultType="com.pos.sales.domain.ShiftSalesTotals">
+    <select id="salesTotals" resultType="com.pos.sales.dto.ShiftSalesTotals">
         SELECT COUNT(*) AS sales_count,
                COALESCE(SUM(total), 0) AS gross,
                COALESCE(SUM(discount_total), 0) AS discount,
@@ -43,19 +43,19 @@
         WHERE shift_id = #{shiftId} AND status IN ('COMPLETED', 'REFUNDED')
     </select>
 
-    <select id="paymentsByMethod" resultType="com.pos.sales.domain.AmountByLabel">
+    <select id="paymentsByMethod" resultType="com.pos.sales.dto.AmountByLabel">
         SELECT p.method AS label, COALESCE(SUM(p.amount), 0) AS amount
         FROM sale_payments p JOIN sales s ON s.id = p.sale_id
         WHERE s.shift_id = #{shiftId} AND s.status IN ('COMPLETED', 'REFUNDED')
         GROUP BY p.method
     </select>
 
-    <select id="cashMovementTotals" resultType="com.pos.sales.domain.AmountByLabel">
+    <select id="cashMovementTotals" resultType="com.pos.sales.dto.AmountByLabel">
         SELECT type AS label, COALESCE(SUM(amount), 0) AS amount
         FROM cash_movements WHERE shift_id = #{shiftId} GROUP BY type
     </select>
 
-    <select id="refundTotals" resultType="com.pos.sales.domain.RefundTotals">
+    <select id="refundTotals" resultType="com.pos.sales.dto.RefundTotals">
         SELECT COALESCE(SUM(refund_total), 0) AS total,
                COALESCE(SUM(CASE WHEN method = 'CASH' THEN refund_total ELSE 0 END), 0) AS cash
         FROM sale_returns WHERE shift_id = #{shiftId}

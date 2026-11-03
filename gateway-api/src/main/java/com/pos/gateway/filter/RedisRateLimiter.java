@@ -12,10 +12,6 @@ import com.pos.common.cache.RedisCircuit;
 
 import reactor.core.publisher.Mono;
 
-/**
- * Cluster-wide fixed window counter: every gateway instance increments the same Redis key, so the quota holds no
- * matter how many instances run. When Redis is slow or down the caller's in-memory limiter decides instead.
- */
 @Component
 public class RedisRateLimiter {
 
@@ -33,7 +29,6 @@ public class RedisRateLimiter {
         return redis != null;
     }
 
-    /** @param fallback consulted (in memory, per instance) when Redis cannot answer */
     public Mono<Boolean> allow(String key, int limitPerMinute, BooleanSupplier fallback) {
         if (redis == null || !circuit.allow()) {
             return Mono.fromSupplier(fallback::getAsBoolean);

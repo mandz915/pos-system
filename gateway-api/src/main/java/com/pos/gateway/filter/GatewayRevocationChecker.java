@@ -13,7 +13,6 @@ import com.pos.common.security.RevocationKeys;
 
 import reactor.core.publisher.Mono;
 
-/** Reactive twin of {@code RedisTokenRevocations}: same keys, fails open when Redis is slow or down. */
 @Component
 public class GatewayRevocationChecker {
 
@@ -32,11 +31,7 @@ public class GatewayRevocationChecker {
         }
         return redis.opsForValue()
                 .multiGet(List.of(RevocationKeys.token(token.jti()), RevocationKeys.user(token.user().userId())))
-                .map(values -> {
-                    if (values.size() != 2) return false;
-                    RevocationKeys.isRevoked(token, values.get(0), values.get(1));
-                    return true;
-                })
+                .map(values -> values.size() == 2 && RevocationKeys.isRevoked(token, values.get(0), values.get(1)))
                 .timeout(TIMEOUT)
                 .doOnNext(ok -> circuit.success())
                 .onErrorResume(e -> {

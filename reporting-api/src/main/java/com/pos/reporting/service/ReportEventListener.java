@@ -17,7 +17,6 @@ import com.pos.reporting.mapper.ReportMapper;
 
 import lombok.RequiredArgsConstructor;
 
-/** Builds the daily read models from sale events. Idempotent per event id. */
 @Component
 @RequiredArgsConstructor
 public class ReportEventListener {

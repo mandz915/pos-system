@@ -22,7 +22,7 @@ spring:
       connect-timeout: 500ms
   datasource:
     url: ${DB_URL:jdbc:postgresql://localhost:5432/pos_administration}
-    # The application role must be a plain one (no superuser, no BYPASSRLS) or tenant isolation does not apply.
+
     username: ${DB_USER:pos_app}
     password: ${DB_PASSWORD:pos_app}
     hikari:
@@ -30,7 +30,7 @@ spring:
       minimum-idle: 5
       connection-timeout: 3000
   flyway:
-    # Migrations run as the table owner, the application as a plain role (see scripts/init-databases.sh).
+
     user: ${FLYWAY_USER:pos}
     password: ${FLYWAY_PASSWORD:pos}
 

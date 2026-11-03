@@ -3,8 +3,6 @@ package com.pos.catalog.dto;
 import java.math.BigDecimal;
 import java.time.Instant;
 
-import com.pos.catalog.domain.PromotionType;
-
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
@@ -43,11 +41,6 @@ public final class CatalogDtos {
             Boolean active) {
     }
 
-    /**
-     * What clients and other services see. {@code cost} is only filled for managers/admins.
-     * {@code taxInclusive} tells whether {@code price} already contains the tax. {@code tax} repeats the tax details
-     * as one optional object (null when the product has no tax assigned).
-     */
     public record ProductView(
             Long id,
             String sku,
@@ -67,14 +60,12 @@ public final class CatalogDtos {
             boolean active,
             TaxInfo tax) {
 
-        /** The same view without the cost, safe to cache and to show to any signed-in user. */
         public ProductView withoutCost() {
             return new ProductView(id, sku, barcode, name, description, categoryId, taxRateId, taxRate, taxInclusive,
                     uom, price, null, discountPerUnit, effectivePrice, imageUrl, active, tax);
         }
     }
 
-    /** The tax that applies to an item; {@code null} on a view when the product has no tax assigned (untaxed). */
     public record TaxInfo(Long id, String code, BigDecimal rate, boolean inclusive) {
     }
 

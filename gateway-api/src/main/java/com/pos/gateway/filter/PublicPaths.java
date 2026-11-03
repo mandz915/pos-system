@@ -6,7 +6,6 @@ import java.util.List;
 import org.springframework.web.util.pattern.PathPattern;
 import org.springframework.web.util.pattern.PathPatternParser;
 
-/** Matches request paths against the configured public (no JWT needed) path patterns. */
 public final class PublicPaths {
 
     private final List<PathPattern> patterns;

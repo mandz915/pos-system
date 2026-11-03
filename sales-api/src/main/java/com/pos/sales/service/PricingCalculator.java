@@ -5,15 +5,8 @@ import java.math.RoundingMode;
 import java.util.List;
 
 import com.pos.common.util.Money;
-import com.pos.sales.domain.SaleLine;
+import com.pos.sales.dto.SaleLine;
 
-/**
- * Line and sale arithmetic. All amounts are rounded half-up to two decimals per line, so a receipt always adds up.
- *
- * <p>Tax-inclusive prices (the default for retail in the Philippines): the shelf price already contains the tax, so
- * the line total equals price minus discount and the tax is the portion {@code rate / (100 + rate)} of it.
- * Tax-exclusive prices: tax is added on top of price minus discount.
- */
 public final class PricingCalculator {
 
     private PricingCalculator() {
@@ -30,7 +23,6 @@ public final class PricingCalculator {
         return lineWithDiscount(quantity, unitPrice, Money.round(discountPerUnit.multiply(quantity)), taxRate, taxInclusive);
     }
 
-    /** Same as {@link #line} when the discount of the whole line is already known (quantity based promotions). */
     public static LineAmounts lineWithDiscount(BigDecimal quantity, BigDecimal unitPrice, BigDecimal lineDiscount,
                                                BigDecimal taxRate, boolean taxInclusive) {
         BigDecimal gross = Money.round(unitPrice.multiply(quantity));

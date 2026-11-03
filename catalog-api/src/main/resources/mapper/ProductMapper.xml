@@ -12,22 +12,22 @@
         VALUES (#{sku}, #{barcode}, #{name}, #{description}, #{categoryId}, #{taxRateId}, #{uom}, #{price}, #{cost}, #{imageUrl}, #{active})
     </insert>
 
-    <select id="findById" resultType="com.pos.catalog.domain.Product">
+    <select id="findById" resultType="com.pos.catalog.dto.Product">
         <include refid="selectWithTax"/>
          WHERE p.id = #{id}
     </select>
 
-    <select id="findByBarcode" resultType="com.pos.catalog.domain.Product">
+    <select id="findByBarcode" resultType="com.pos.catalog.dto.Product">
         <include refid="selectWithTax"/>
          WHERE p.barcode = #{barcode}
     </select>
 
-    <select id="findBySku" resultType="com.pos.catalog.domain.Product">
+    <select id="findBySku" resultType="com.pos.catalog.dto.Product">
         <include refid="selectWithTax"/>
          WHERE p.sku = #{sku}
     </select>
 
-    <select id="search" resultType="com.pos.catalog.domain.Product">
+    <select id="search" resultType="com.pos.catalog.dto.Product">
         SELECT p.*, t.code AS tax_code, t.rate AS tax_rate, t.inclusive AS tax_inclusive
         FROM products p LEFT JOIN tax_rates t ON t.id = p.tax_rate_id
         <where>

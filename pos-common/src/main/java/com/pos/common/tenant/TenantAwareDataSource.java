@@ -8,15 +8,6 @@ import javax.sql.DataSource;
 
 import org.springframework.jdbc.datasource.DelegatingDataSource;
 
-/**
- * Tells PostgreSQL which tenant a connection works for, every time a connection is handed out. The row-level
- * security policies of the tables read these two session settings:
- * <ul>
- *   <li>{@code app.tenant_id}: the tenant id, or empty when the thread has none (then no row matches);</li>
- *   <li>{@code app.system}: {@code on} only inside {@link TenantContext#callAsSystem}.</li>
- * </ul>
- * Because it is applied on every checkout, a pooled connection can never carry the previous caller's tenant.
- */
 public class TenantAwareDataSource extends DelegatingDataSource {
 
     static final String SQL = "SELECT set_config('app.tenant_id', ?, false), set_config('app.system', ?, false)";

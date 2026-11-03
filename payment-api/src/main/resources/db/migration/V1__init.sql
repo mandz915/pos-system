@@ -1,4 +1,3 @@
--- One row per tender attempt (PAYMENT) or money returned to the customer (REFUND).
 CREATE TABLE payments (
     id          BIGSERIAL PRIMARY KEY,
     kind        VARCHAR(10)   NOT NULL CHECK (kind IN ('PAYMENT', 'REFUND')),
